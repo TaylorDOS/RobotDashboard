@@ -1,8 +1,6 @@
-"use client";
-
+"use client"
 import { useState, useEffect } from 'react';
 import axios from 'axios';
-import io from 'socket.io-client';
 
 const Dashboard: React.FC = () => {
   const [loading, setLoading] = useState<boolean>(false);
@@ -11,24 +9,10 @@ const Dashboard: React.FC = () => {
   const [end, setEnd] = useState<string>('');
   const [loadCompartment, setLoadCompartment] = useState<string>('');
   const [unloadCompartment, setUnloadCompartment] = useState<string>('');
-  const [status, setStatus] = useState<string>("None");
-  const [isConnected, setIsConnected] = useState<boolean>(false);
-
-  useEffect(() => {
-    if (!isConnected) return; // Only connect WebSocket if isConnected is true
-
-    const socket = io();
-
-    socket.on('status-update', (data) => {
-      setStatus(data.message);
-    });
-
-    return () => {
-      socket.disconnect(); // Cleanup on component unmount
-    };
-  }, [isConnected]);
+  const [status, setStatus] = useState<string>("Waiting to start");
 
   const handleDropdownAction = () => {
+    setStatus('Starting');
     const requestPayload = {
       message: "InitiateLoading",
       start: start,
@@ -39,11 +23,10 @@ const Dashboard: React.FC = () => {
 
     axios.post('https://4oomdu5wr0.execute-api.ap-southeast-1.amazonaws.com/default/WebHooks', requestPayload)
       .then(response => {
-        setSuccessMessage('Initiate Loading!');
-        setIsConnected(true);
+        setStatus('Initiate Loading!');
       })
       .catch(error => {
-        setSuccessMessage('Error executing dropdown action.');
+        setStatus('Error executing dropdown action.');
         console.error('Error:', error);
       });
   };
@@ -52,7 +35,7 @@ const Dashboard: React.FC = () => {
     <div className="max-w-screen-lg mx-auto mt-8">
       <h1 className="text-4xl font-bold">Welcome back, operator</h1>
       <div className="text-md mb-4">Assign delivery task here</div>
-      <div className="flex w-full mt-4 gap-16 lg:h-[50vh] justify-start items-start">
+      <div className="flex w-full mt-4 gap-16 justify-start items-start">
         <div className="flex flex-col w-1/2 mr-4">
           <label htmlFor="start" className="text-md font-medium">Start Point</label>
           <select id="start" value={start} onChange={(e) => setStart(e.target.value)}
@@ -93,6 +76,9 @@ const Dashboard: React.FC = () => {
           <button onClick={handleDropdownAction} className="mt-6 px-4 py-2 bg-blue-500 text-white font-semibold rounded-lg hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-400 mb-4">
             Deliver
           </button>
+          <div className="mt-4 text-lg">
+            <strong>Status: </strong> {status}
+          </div>
 
         </div>
 
@@ -102,11 +88,6 @@ const Dashboard: React.FC = () => {
           </div>
           <span className="text-md font-medium mb-2 text-center">Region for Map</span>
         </div>
-      </div>
-
-      {successMessage && <div className="text-green-500 mb-4">{successMessage}</div>}
-      <div className="mt-4 text-lg">
-        <strong>Status: </strong> {status}
       </div>
     </div>
   );
