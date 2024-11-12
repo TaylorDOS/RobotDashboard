@@ -32,7 +32,7 @@
     "**/*.ts",
     "**/*.tsx",
     ".next/types/**/*.ts"
-  ],
+, "pages/api/sse3/route.js"  ],
   "exclude": [
     "node_modules"
   ]

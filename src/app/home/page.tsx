@@ -10,7 +10,6 @@ const Dashboard: React.FC = () => {
   const [loadCompartment, setLoadCompartment] = useState<string>('');
   const [unloadCompartment, setUnloadCompartment] = useState<string>('');
   const [status, setStatus] = useState<string>("Waiting to start");
-
   const handleDropdownAction = () => {
     setStatus('Starting');
     const requestPayload = {
