@@ -1,42 +1,40 @@
 import { Server } from 'socket.io';
 
 export default function handler(req, res) {
-  // Check for POST request to trigger WebSocket message
+  // Check if the request method is POST
   if (req.method === 'POST') {
-    // Initialize WebSocket server (only once)
+    // Initialize WebSocket server only once
     if (!res.socket.server.io) {
       const io = new Server(res.socket.server);
       res.socket.server.io = io;
 
-      // When a client connects, listen for status updates
+      // Handle client connections
       io.on('connection', (socket) => {
-        console.log('a user connected');
+        console.log('A user connected');
 
-        // Emit a message to the client (just an example on connection)
+        // Send a message to the client on connection
         socket.emit('status-update', { message: 'Waiting for updates...' });
 
         // Handle client disconnection
         socket.on('disconnect', () => {
-          console.log('user disconnected');
+          console.log('User disconnected');
         });
       });
     }
 
-    // Parse the incoming request body
+    // Extract the message from the request body
     const { message } = req.body;
 
-    // If the message is "UnloadingDone", emit a WebSocket message to all connected clients
+    // If the message is "UnloadingDone", broadcast a WebSocket message to all clients
     if (message === 'UnloadingDone') {
-      // Send a message to all connected clients
       res.socket.server.io.emit('status-update', { message: 'Delivery done' });
-
       console.log('WebSocket message emitted: Unloading Done');
     }
 
-    // Respond back with a success status
+    // Respond to the client with a success message
     return res.status(200).json({ message: 'Request processed successfully' });
   }
 
-  // If method is not POST, return 405 Method Not Allowed
+  // Respond with 405 if the request method is not POST
   res.status(405).end();
 }
