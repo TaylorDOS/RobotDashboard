@@ -7,7 +7,7 @@ const Home: React.FC = () => {
   useEffect(() => {
     const fetchMessage = async () => {
       try {
-        const res = await fetch('/api/status'); // Replace with your actual API endpoint if different
+        const res = await fetch('/api/status');
         if (res.ok) {
           const data = await res.json();
           setMessage(data.message);
