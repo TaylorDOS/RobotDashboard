@@ -9,7 +9,28 @@ const Dashboard: React.FC = () => {
   const [end, setEnd] = useState<string>('');
   const [loadCompartment, setLoadCompartment] = useState<string>('');
   const [unloadCompartment, setUnloadCompartment] = useState<string>('');
-  const [status, setStatus] = useState<string>("Waiting to start");
+  const [status, setStatus] = useState<string>("None");
+
+  const fetchStatus = async () => {
+    try {
+      const response = await fetch('/api/status');
+      if (response.ok) {
+        const data = await response.json();
+        setStatus(data.message);
+      } else {
+        console.error('Failed to fetch status');
+      }
+    } catch (error) {
+      console.error('Error fetching status:', error);
+    }
+  };
+
+  useEffect(() => {
+    const intervalId = setInterval(fetchStatus, 3000);
+    fetchStatus();
+    return () => clearInterval(intervalId);
+  }, []);
+
   const handleDropdownAction = () => {
     setStatus('Starting');
     const requestPayload = {
