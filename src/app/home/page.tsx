@@ -10,13 +10,15 @@ const Dashboard: React.FC = () => {
   const [loadCompartment, setLoadCompartment] = useState<string>('');
   const [unloadCompartment, setUnloadCompartment] = useState<string>('');
   const [status, setStatus] = useState<string>("None");
+  const [timestamp, setTimestamp] = useState<number | null>(null); // New timestamp state
 
   const fetchStatus = async () => {
     try {
       const response = await fetch('/api/status');
       if (response.ok) {
         const data = await response.json();
-        setStatus(data.message);
+        setStatus(data.status);
+        setTimestamp(data.timestamp); // Update timestamp
       } else {
         console.error('Failed to fetch status');
       }
@@ -98,6 +100,9 @@ const Dashboard: React.FC = () => {
           </button>
           <div className="mt-4 text-lg">
             <strong>Status: </strong> {status}
+          </div>
+          <div className="text-sm">
+            <strong>Last Updated: </strong> {timestamp ? new Date(timestamp).toLocaleString() : "Not available"}
           </div>
 
         </div>

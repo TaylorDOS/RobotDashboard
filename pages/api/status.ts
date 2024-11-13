@@ -1,19 +1,24 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import axios from 'axios';
 
-let latestMessage = 'None'; // Initial message
-
+// Declare the types for the response data
 type ResponseData = {
-  message: string;
+  status: string;
+  timestamp?: number | null;
 };
 
+let latestStatus: string = 'None'; // Initial status
+let latestTimestamp: number | null = null; // Initial timestamp as null
+
+// URL for your DynamoDB API endpoint
 const DYNAMODB_API_URL = 'https://fzn1ni864d.execute-api.ap-southeast-1.amazonaws.com/default/CurrentProgress';
 
 // Function to fetch the latest value from DynamoDB (only when needed)
-const fetchFromDynamoDB = async () => {
+const fetchFromDynamoDB = async (): Promise<void> => {
   try {
     const response = await axios.get(DYNAMODB_API_URL);
-    latestMessage = response.data.currentProgress || latestMessage;
+    latestStatus = response.data.status;
+    latestTimestamp = response.data.timestamp;
   } catch (error) {
     console.error('Error fetching from DynamoDB:', error);
   }
@@ -22,35 +27,35 @@ const fetchFromDynamoDB = async () => {
 export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse<ResponseData>
-) {
+): Promise<void> {
   try {
     if (req.method === 'POST') {
-      const { message } = req.body;
+      const { status } = req.body;  // Change from message to status
 
-      if (message) {
-        latestMessage = message;
-        // Update DynamoDB with the new message
+      // Check if the status is provided
+      if (status) {
+        latestStatus = status;
         await axios.post(DYNAMODB_API_URL, {
-          currentProgress: message,
+          status: status,   // Only send the status in the request
         });
 
-        return res.status(200).json({ message: 'Message updated successfully' });
+        return res.status(200).json({ status: 'Status updated successfully' }); // Changed response message
       } else {
-        return res.status(400).json({ message: 'No message provided' });
+        return res.status(400).json({ status: 'No status provided' }); // Changed response message
       }
 
     } else if (req.method === 'GET') {
-      // Return the current message, fetching from DynamoDB only if it's empty or stale
-      if (latestMessage === 'None') {
+      // Fetch from DynamoDB if latestStatus is empty or stale
+      if (latestStatus === 'None') {
         await fetchFromDynamoDB();
       }
 
-      return res.status(200).json({ message: latestMessage });
+      return res.status(200).json({ status: latestStatus, timestamp: latestTimestamp }); // Changed response to use status
     } else {
-      return res.status(405).json({ message: 'Method Not Allowed' });
+      return res.status(405).json({ status: 'Method Not Allowed' }); // Changed response message
     }
   } catch (error) {
     console.error('Error in status handler:', error);
-    return res.status(500).json({ message: 'Internal Server Error' });
+    return res.status(500).json({ status: 'Internal Server Error' }); // Changed response message
   }
 }
