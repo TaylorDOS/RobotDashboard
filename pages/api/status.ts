@@ -9,6 +9,16 @@ type ResponseData = {
 
 const DYNAMODB_API_URL = 'https://fzn1ni864d.execute-api.ap-southeast-1.amazonaws.com/default/CurrentProgress';
 
+// Function to fetch the latest value from DynamoDB (only when needed)
+const fetchFromDynamoDB = async () => {
+  try {
+    const response = await axios.get(DYNAMODB_API_URL);
+    latestMessage = response.data.currentProgress || latestMessage;
+  } catch (error) {
+    console.error('Error fetching from DynamoDB:', error);
+  }
+};
+
 export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse<ResponseData>
@@ -18,10 +28,8 @@ export default async function handler(
       const { message } = req.body;
 
       if (message) {
-        // Update local state
         latestMessage = message;
-
-        // Update DynamoDB via HTTP POST request
+        // Update DynamoDB with the new message
         await axios.post(DYNAMODB_API_URL, {
           currentProgress: message,
         });
@@ -32,11 +40,10 @@ export default async function handler(
       }
 
     } else if (req.method === 'GET') {
-      // Fetch the latest message from DynamoDB via HTTP GET request
-      const response = await axios.get(DYNAMODB_API_URL);
-      
-      // Assume the response contains { currentProgress: <value> }
-      latestMessage = response.data.currentProgress || latestMessage;
+      // Return the current message, fetching from DynamoDB only if it's empty or stale
+      if (latestMessage === 'None') {
+        await fetchFromDynamoDB();
+      }
 
       return res.status(200).json({ message: latestMessage });
     } else {
