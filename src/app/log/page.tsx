@@ -1,7 +1,17 @@
 "use client";
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import axios from 'axios';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  TableSortLabel,
+  Paper,
+} from '@mui/material';
 
 interface Log {
   commands: string;
@@ -12,6 +22,11 @@ interface Log {
 const Log: React.FC = () => {
   const [logs, setLogs] = useState<Log[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
+  const [order, setOrder] = useState<'asc' | 'desc'>('asc');
+  const [orderBy, setOrderBy] = useState<keyof Log>('timestamp');
+  useEffect(() => {
+    fetchLogs();
+  }, []);
 
   const fetchLogs = () => {
     setLoading(true);
@@ -27,43 +42,90 @@ const Log: React.FC = () => {
       });
   };
 
+  const handleRequestSort = (property: keyof Log) => {
+    const isAsc = orderBy === property && order === 'asc';
+    setOrder(isAsc ? 'desc' : 'asc');
+    setOrderBy(property);
+  };
+
+  const sortedLogs = [...logs].sort((a, b) => {
+    if (orderBy === 'timestamp') {
+      return order === 'asc' ? a.timestamp - b.timestamp : b.timestamp - a.timestamp;
+    }
+    return 0; // Default sorting by timestamp, you can adjust if other properties need sorting.
+  });
+
   return (
     <div className="max-w-screen-lg mx-auto mt-8">
-      <h1 className="text-4xl font-bold mb-4">Commands Log</h1>
-      <div className="text-md mb-4">description here</div>
-      <button
-        onClick={fetchLogs}
-        className="mb-4 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
-      >
-        Generate Logs
-      </button>
-      {loading ? (
-        <div>Loading...</div>
-      ) : (
-        logs.length > 0 ? (
-          <table className="w-full border-collapse border border-gray-300">
-            <thead>
-              <tr>
-                <th className="border p-2">Command ID</th>
-                <th className="border p-2">Content</th>
-                <th className="border p-2">Timestamp</th>
-              </tr>
-            </thead>
-            <tbody>
-              {logs.map((log) => (
-                <tr key={log.commands}>
-                  <td className="border p-2">{log.commands}</td>
-                  <td className="border p-2">{log.content}</td>
-                  <td className="border p-2">{new Date(log.timestamp).toLocaleString()}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+      <div className='mx-4 lg:mx-0'>
+        <h1 className="text-4xl font-bold mb-4">Commands Log</h1>
+        <div className="text-md mb-4">
+          Command logs provide a real-time record of all actions within the system, capturing essential details like timestamps, command types, status, and parameters. These logs enable operators to track progress, troubleshoot, and ensure smooth operations across all tasks.
+        </div>
+        <button
+          onClick={fetchLogs}
+          className="mb-4 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+        >
+          Reload
+        </button>
+        {loading ? (
+          <div>Loading...</div>
         ) : (
-          <div>No logs to display</div>
-        )
-      )}
+          logs.length > 0 ? (
+            <TableContainer component={Paper}>
+              <Table>
+                <TableHead>
+                  <TableRow>
+                    <TableCell>
+                      <TableSortLabel
+                        active={orderBy === 'commands'}
+                        direction={orderBy === 'commands' ? order : 'asc'}
+                        onClick={() => handleRequestSort('commands')}
+                      >
+                        Command ID
+                      </TableSortLabel>
+                    </TableCell>
+                    <TableCell>
+                      <TableSortLabel
+                        active={orderBy === 'content'}
+                        direction={orderBy === 'content' ? order : 'asc'}
+                        onClick={() => handleRequestSort('content')}
+                      >
+                        Content
+                      </TableSortLabel>
+                    </TableCell>
+                    <TableCell>
+                      <TableSortLabel
+                        active={orderBy === 'timestamp'}
+                        direction={orderBy === 'timestamp' ? order : 'asc'}
+                        onClick={() => handleRequestSort('timestamp')}
+                      >
+                        Timestamp
+                      </TableSortLabel>
+                    </TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {sortedLogs.map((log) => (
+                    <TableRow key={log.commands}>
+                      <TableCell>{log.commands}</TableCell>
+                      <TableCell style={{ maxWidth: '16rem', whiteSpace: 'nowrap', textOverflow: 'ellipsis', overflow: 'hidden' }}>
+                        {log.content}
+                      </TableCell>
+                      <TableCell>{new Date(log.timestamp).toLocaleString()}</TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </TableContainer>
+          ) : (
+            <div>No logs to display</div>
+          )
+        )}
+      </div>
+
     </div>
+
   );
 };
 
