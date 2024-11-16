@@ -1,18 +1,16 @@
 "use client"
 import { useState, useEffect } from 'react';
 import axios from 'axios';
-import Tracker from '@/components/Tracker';
+import StatusBar from '@/components/StatusBar';
 
 const Dashboard: React.FC = () => {
   const [loading, setLoading] = useState<boolean>(false);
-  const [successMessage, setSuccessMessage] = useState<string>("");
   const [start, setStart] = useState<string>('');
   const [end, setEnd] = useState<string>('');
   const [loadCompartment, setLoadCompartment] = useState<string>('');
   const [unloadCompartment, setUnloadCompartment] = useState<string>('');
   const [status, setStatus] = useState<string>("None");
   const [timestamp, setTimestamp] = useState<number | null>(null);
-  const [completedSteps, setCompletedSteps] = useState<number>(0);
 
   const steps = ['Waiting', 'Moving to Start', 'Pickup', 'Moving to Dropoff', 'Dropoff', 'Done'];
 
@@ -23,15 +21,6 @@ const Dashboard: React.FC = () => {
         const data = await response.json();
         setStatus(data.status);
         setTimestamp(data.timestamp);
-        const statusToCompletedSteps: { [key: string]: number } = {
-          'Waiting': 1,
-          'Moving to Start': 2,
-          'Pickup': 3,
-          'Moving to Dropoff': 4,
-          'Dropoff': 5,
-          'Done': 6,
-        };
-        setCompletedSteps(statusToCompletedSteps[data.status] ?? 0);
       } else {
         console.error('Failed to fetch status');
       }
@@ -47,7 +36,6 @@ const Dashboard: React.FC = () => {
   }, []);
 
   const handleDropdownAction = () => {
-    setStatus('Starting');
     const requestPayload = {
       message: "InitiateLoading",
       start: start,
@@ -122,16 +110,7 @@ const Dashboard: React.FC = () => {
           <div>
           </div>
         </div>
-        <div className="mt-4">
-          <h2 className="text-2xl font-bold mb-4">Status</h2>
-          <Tracker steps={steps} completedSteps={completedSteps} />
-          <div className="mt-4 text-lg">
-            <strong>Current Progress: </strong> {status}
-          </div>
-          <div className="text-sm">
-            <strong>Last Updated: </strong> {timestamp ? new Date(timestamp).toLocaleString() : "Not available"}
-          </div>
-        </div>
+        <StatusBar status={status} timestamp={timestamp} />
       </div>
     </div>
   );

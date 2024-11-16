@@ -5,12 +5,10 @@ import { Container } from "@/components/Container";
 
 export function Footer() {
   const navigation = ["Home", "Logs", "Setup", "About"];
-  const legal = ["Terms", "Privacy", "Legal"];
   return (
-    <div className="relative">
-      <Container>
-        <div className="grid max-w-screen-lg grid-cols-1 gap-10 pt-10 mx-auto mt-5 border-t border-gray-100 dark:border-trueGray-700 lg:grid-cols-5">
-          <div className="lg:col-span-2">
+    <div className="relative mx-auto max-w-screen-lg">
+        <div className="lg:mx-0 mx-8 grid lg:grid-cols-3  pt-8 mt-5 border-t border-gray-200 dark:border-trueGray-700">
+          <div className="">
             <div>
               {" "}
               <Link
@@ -28,7 +26,7 @@ export function Footer() {
               </Link>
             </div>
 
-            <div className="max-w-md mt-4 text-gray-500 dark:text-gray-400">
+            <div className="mt-4 text-gray-500 dark:text-gray-400">
               Nextly is a free landing page & marketing website template for
               startups and indie projects. Its built with Next.js & TailwindCSS.
               And its completely open-source.
@@ -38,19 +36,6 @@ export function Footer() {
           <div>
             <div className="flex flex-wrap w-full -mt-2 -ml-3 lg:ml-0">
               {navigation.map((item, index) => (
-                <Link
-                  key={index}
-                  href="/"
-                  className="w-full px-4 py-2 text-gray-500 rounded-md dark:text-gray-300 hover:text-indigo-500 focus:text-indigo-500 focus:bg-indigo-100 focus:outline-none dark:focus:bg-trueGray-700"
-                >
-                  {item}
-                </Link>
-              ))}
-            </div>
-          </div>
-          <div>
-            <div className="flex flex-wrap w-full -mt-2 -ml-3 lg:ml-0">
-              {legal.map((item, index) => (
                 <Link
                   key={index}
                   href="/"
@@ -106,8 +91,6 @@ export function Footer() {
             Glazestock
           </a>
         </div>
-      </Container>
-      {/* Do not remove this */}
     </div>
   );
 }
