@@ -17,23 +17,11 @@ export const Navbar = () => {
     }
   }, [pathname]);
 
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (navbarRef.current && !navbarRef.current.contains(event.target as Node)) {
-        setOpenDropdown(null);
-      }
-    };
-
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
-  }, []);
-
   const navigation = [
     { name: "Home", href: "/home" },
+    { name: "Deliver", href: "/deliver" },
+    { name: "Simulator", href: "/simulator" },
     { name: "Logs", href: "/log" },
-    { name: "Setup", href: "/setup" },
     { name: "About", href: "/about" },
   ];
 

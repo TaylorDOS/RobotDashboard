@@ -33,6 +33,12 @@ const ESP32: Command[] = [
 
 const FRONTEND: Command[] = [
   {
+    status: "Waiting",
+    name: "Reset",
+    fields: [
+    ],
+  },
+  {
     status: "Moving to Start",
     name: "InitiateLoading",
     fields: [
@@ -66,7 +72,7 @@ const MIRFLEET: Command[] = [
 const ENDPOINT =
   "https://4oomdu5wr0.execute-api.ap-southeast-1.amazonaws.com/default/WebHooks";
 
-const Setup: React.FC = () => {
+const Simulator: React.FC = () => {
   const [loading, setLoading] = useState<boolean>(false);
   const [successMessage, setSuccessMessage] = useState<string>("");
   const [errorMessage, setErrorMessage] = useState<string>("");
@@ -152,8 +158,8 @@ const Setup: React.FC = () => {
   return (
     <div className="max-w-screen-lg mx-auto">
       <div className="mx-4 mt-4">
-        <h1 className="text-4xl font-bold mb-4">Setup</h1>
-        <div>Simulator</div>
+        <h1 className="text-4xl font-bold mb-4">Commands Simulator</h1>
+        <div>Simulate different commands from the frontend, ESP32, and MiR Fleet Integration API to ensure AWS Lambda responds correctly.</div>
 
         {/* Tab Navigation */}
         <div className="flex mb-8 border-b">
@@ -240,4 +246,4 @@ const Setup: React.FC = () => {
   );
 };
 
-export default Setup;
+export default Simulator;
