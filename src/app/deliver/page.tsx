@@ -7,7 +7,7 @@ import StatusBar from "@/components/StatusBar";
 
 
 const Deliver: React.FC = () => {
-  const [currentStep, setCurrentStep] = useState(6);
+  const [currentStep, setCurrentStep] = useState(0);
   const [pickup, setPickup] = useState<number | null>(null);
   const [dropoff, setDropoff] = useState<number | null>(null);
   const [selectedSize, setSelectedSize] = useState<string | null>(null);
@@ -135,8 +135,8 @@ const Deliver: React.FC = () => {
 
             <select
               className="border border-gray-300 rounded p-2 mt-2 w-full"
-              value={pickup === null ? "" : pickup} // If pickup is null, show empty string
-              onChange={(e) => setPickup(e.target.value ? Number(e.target.value) : null)} // Set state as number or null
+              value={pickup === null ? "" : pickup}
+              onChange={(e) => setPickup(e.target.value ? Number(e.target.value) : null)}
             >
               <option value="" disabled>
                 Select a base station
@@ -255,7 +255,11 @@ const Deliver: React.FC = () => {
       setError("Please select size before proceeding.");
       return;
     }
-    else if (currentStep === 2 && !pickup) {
+    else if (currentStep === 2 && pickup === null) {
+      setError("Please select a base station before proceeding.");
+      return;
+    }
+    else if (currentStep === 3 && dropoff === null) {
       setError("Please select a base station before proceeding.");
       return;
     }
