@@ -8,13 +8,18 @@ import StatusBar from "@/components/StatusBar";
 
 const Deliver: React.FC = () => {
   const [currentStep, setCurrentStep] = useState(0);
+
   const [pickup, setPickup] = useState<number | null>(null);
   const [dropoff, setDropoff] = useState<number | null>(null);
   const [selectedSize, setSelectedSize] = useState<string | null>(null);
   const [error, setError] = useState("");
+
   const [status, setStatus] = useState<string>("None");
   const [timestamp, setTimestamp] = useState<number | null>(null);
+
   const [fetching, setFetching] = useState(false);
+  const [showNextButton, setShowNextButton] = useState(true);
+  const [showBackButton, setShowBackButton] = useState(false);
 
   const fetchStatus = async () => {
     try {
@@ -32,16 +37,49 @@ const Deliver: React.FC = () => {
   };
 
   useEffect(() => {
-    if (!fetching) return; // Do not start fetching until fetching is true
+    if (!fetching) return;
 
     const intervalId = setInterval(fetchStatus, 3000);
-    fetchStatus(); // Fetch once initially after starting
+    fetchStatus();
 
-    return () => clearInterval(intervalId); // Cleanup on unmount or when stopping fetching
-  }, [fetching]); // Only run when fetching is true
+    return () => clearInterval(intervalId)
+  }, [fetching]);
+
+  useEffect(() => {
+    if (currentStep === 0) {
+      setShowNextButton(false);
+      setShowBackButton(false);
+    }
+    else if (currentStep === 4) {
+      setShowNextButton(false);
+      setShowBackButton(false);
+    }
+    else if (currentStep === 5) {
+      setShowNextButton(false);
+      setShowBackButton(false);
+
+    }
+    else if (currentStep === 6) {
+      setShowNextButton(false);
+      setShowBackButton(false);
+
+    }
+    else if (currentStep === 7) {
+      setShowNextButton(false);
+      setShowBackButton(false);
+    }
+     else {
+      setShowNextButton(true);
+      setShowBackButton(true);
+    }
+
+    if (screens[currentStep]?.onLoad) {
+      screens[currentStep].onLoad();
+    }
+  }, [currentStep]);
 
   const startFetching = () => {
-    setFetching(true); // Start the fetching
+    setFetching(true);
   };
 
   const sendRequest = () => {
@@ -59,10 +97,38 @@ const Deliver: React.FC = () => {
       .catch(error => {
         console.error('Error:', error);
       });
+    handleNext();
   };
+
   const handleSelectSize = (size: string) => {
     setSelectedSize(size);
-    console.log(`${size} size selected`);
+  };
+
+  const handleNext = () => {
+    if (currentStep === 1) {
+      if (selectedSize === null) {
+        setError("Please select size before proceeding.");
+        return;
+      }
+    }
+    else if (currentStep === 2 && pickup === null) {
+      setError("Please select a base station before proceeding.");
+      return;
+    }
+    else if (currentStep === 3 && dropoff === null) {
+      setError("Please select a base station before proceeding.");
+      return;
+    }
+    else if (currentStep === 6) {
+      startFetching();
+    }
+    setError("");
+    if (currentStep < screens.length - 1)
+      setCurrentStep(currentStep + 1);
+  };
+
+  const handleBack = () => {
+    if (currentStep > 0) setCurrentStep(currentStep - 1);
   };
 
   const screens = [
@@ -119,20 +185,21 @@ const Deliver: React.FC = () => {
             </button>
 
           </div>
-          {error && (
-            <p className="text-red-500 text-sm mt-2">{error}</p> // Error message here
-          )}
+          <div className="h-6 mt-2">
+            {error && (
+              <p className="text-red-500 text-sm">{error}</p>
+            )}
+          </div>
         </div>
 
       ),
     },
     {
       title: "Where to pick up?",
-      description: "Select which base station you are at.",
+      description: "Select the nearest base station to where you are.",
       content: (
-        <div className="w-full">
+        <div className="w-1/2">
           <label className="block">
-
             <select
               className="border border-gray-300 rounded p-2 mt-2 w-full"
               value={pickup === null ? "" : pickup}
@@ -146,9 +213,11 @@ const Deliver: React.FC = () => {
               <option value={3}>Base Station 3</option>
             </select>
           </label>
-          {error && (
-            <p className="text-red-500 text-sm mt-2">{error}</p> // Error message here
-          )}
+          <div className="h-6 mt-2 ">
+            {error && (
+              <p className="text-red-500 text-sm">{error}</p>
+            )}
+          </div>
         </div>
       ),
     },
@@ -156,7 +225,7 @@ const Deliver: React.FC = () => {
       title: "Where to drop off?",
       description: "Select which base station to drop off at.",
       content: (
-        <div className="w-full">
+        <div className="w-1/2">
           <label className="block">
             Select Drop Off Base Station:
             <select
@@ -172,9 +241,11 @@ const Deliver: React.FC = () => {
               <option value={3}>Base Station 3</option>
             </select>
           </label>
-          {error && (
-            <p className="text-red-500 text-sm mt-2">{error}</p> // Error message here
-          )}
+          <div className="h-6 mt-2 ">
+            {error && (
+              <p className="text-red-500 text-sm">{error}</p>
+            )}
+          </div>
         </div>
       ),
     },
@@ -183,17 +254,15 @@ const Deliver: React.FC = () => {
       description: "Please wait while we calculate the best route for you.",
       content: (
         <div className="flex flex-col items-center">
-          <FiLoader className="animate-spin text-yellow-500 text-4xl" />
+          <FiLoader className="animate-spin text-blue-500 text-4xl" />
           <p className="mt-4 text-gray-600">Calculating...</p>
         </div>
       ),
       onLoad: () => {
         console.log("Calculating route...");
         setTimeout(() => {
-          if (currentStep < screens.length - 1) {
-            setCurrentStep((prev) => prev + 1); // Navigate to the next step
-          }
-        }, 3000); // Delay of 5 seconds
+          setCurrentStep(5);
+        }, 3000);
       },
     },
     {
@@ -211,7 +280,7 @@ const Deliver: React.FC = () => {
           <div className="px-4 py-2 text-black rounded mt-4">
             Click done when you have dropped off the parcel.
           </div>
-          <button className="px-4 py-2 bg-green-500 text-white rounded mt-4">
+          <button className="px-4 py-2 bg-green-500 text-white rounded mt-4" onClick={handleNext}>
             Done
           </button>
 
@@ -250,30 +319,7 @@ const Deliver: React.FC = () => {
     },
   ];
 
-  const handleNext = () => {
-    if (currentStep === 1 && !selectedSize) {
-      setError("Please select size before proceeding.");
-      return;
-    }
-    else if (currentStep === 2 && pickup === null) {
-      setError("Please select a base station before proceeding.");
-      return;
-    }
-    else if (currentStep === 3 && dropoff === null) {
-      setError("Please select a base station before proceeding.");
-      return;
-    }
-    else if (currentStep === 6) {
-      startFetching();
-    }
-    setError("");
-    if (currentStep < screens.length - 1)
-      setCurrentStep(currentStep + 1);
-  };
 
-  const handleBack = () => {
-    if (currentStep > 0) setCurrentStep(currentStep - 1);
-  };
 
   const progress = ((currentStep) / (screens.length - 1)) * 100;
   useEffect(() => {
@@ -283,32 +329,30 @@ const Deliver: React.FC = () => {
   }, [currentStep]);
 
   return (
-    <div className="max-w-screen-lg mx-auto h-[90vh] flex flex-col justify-center items-center text-center">
-      <h1 className="text-2xl font-bold">{screens[currentStep].title}</h1>
-      <p className="text-gray-600 mt-2">{screens[currentStep].description}</p>
-
-      {/* Step Content */}
-      <div className="mt-7">{screens[currentStep].content}</div>
-
-      {/* Navigation Buttons */}
-      {currentStep > 0 && (
+    <div className="max-w-screen-lg mx-auto h-[90vh] flex flex-col justify-between items-center">
+      <div className="h-1/3 w-full flex flex-col justify-center items-center text-center">
+        <h1 className="text-2xl font-bold">{screens[currentStep].title}</h1>
+        <p className="text-gray-600 mt-2">{screens[currentStep].description}</p>
+      </div>
+      <div className="flex h-2/3 justify-center items-center bg-slate-50 w-full">{screens[currentStep].content}</div>
+      {showBackButton && (
         <button
           onClick={handleBack}
-          className="absolute top-24 left-4 px-4 py-2 bg-gray-200 text-gray-800 rounded"
+          className="absolute top-28 left-4 px-4 py-2 bg-gray-200 text-gray-800 rounded"
         >
           Back
         </button>
       )}
-      {currentStep > 0 && currentStep < screens.length - 1 && (
+      {showNextButton && (
         <button
           onClick={handleNext}
-          className="absolute top-24 right-4 px-4 py-2 bg-gray-200 text-gray-800 rounded"
+          className="absolute top-28 right-4 px-4 py-2 bg-gray-200 text-gray-800 rounded"
         >
           Next
         </button>
       )}
 
-      <div className="absolute bottom-0 left-0 w-full bg-gray-200 h-2 rounded-full">
+      <div className="absolute top-[9vh] left-0 w-full bg-gray-200 h-2">
         <div
           className="bg-blue-500 h-2 rounded-full"
           style={{ width: `${progress}%` }}
