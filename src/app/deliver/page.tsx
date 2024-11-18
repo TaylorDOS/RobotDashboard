@@ -330,6 +330,12 @@ const Deliver: React.FC = () => {
 
   return (
     <div className="max-w-screen-lg mx-auto h-[90vh] flex flex-col justify-between items-center">
+      <div className="relative w-full bg-gray-200 h-2">
+        <div
+          className="bg-blue-500 h-2 rounded-full"
+          style={{ width: `${progress}%` }}
+        />
+      </div>
       <div className="h-1/3 w-full flex flex-col justify-center items-center text-center">
         <h1 className="text-2xl font-bold">{screens[currentStep].title}</h1>
         <p className="text-gray-600 mt-2">{screens[currentStep].description}</p>
@@ -351,13 +357,6 @@ const Deliver: React.FC = () => {
           Next
         </button>
       )}
-
-      <div className="absolute top-[9vh] left-0 w-full bg-gray-200 h-2">
-        <div
-          className="bg-blue-500 h-2 rounded-full"
-          style={{ width: `${progress}%` }}
-        />
-      </div>
     </div>
   );
 };
