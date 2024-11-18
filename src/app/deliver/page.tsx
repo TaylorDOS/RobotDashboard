@@ -164,7 +164,7 @@ const Deliver: React.FC = () => {
             <button
               className={`flex flex-col items-center justify-center w-32 h-32 rounded shadow ${selectedSize === "Medium"
                 ? "bg-blue-500 text-white"
-                : "bg-gray-200 text-gray-800"
+                : "bg-gray-100 text-gray-800"
                 }`}
               onClick={() => handleSelectSize("Medium")}
             >
@@ -176,7 +176,7 @@ const Deliver: React.FC = () => {
             <button
               className={`flex flex-col items-center justify-center w-32 h-32 rounded shadow ${selectedSize === "Large"
                 ? "bg-blue-500 text-white"
-                : "bg-gray-200 text-gray-800"
+                : "bg-gray-100 text-gray-800"
                 }`}
               onClick={() => handleSelectSize("Large")}
             >
@@ -185,7 +185,7 @@ const Deliver: React.FC = () => {
             </button>
 
           </div>
-          <div className="h-6 mt-2">
+          <div className="h-6 text-center mt-8">
             {error && (
               <p className="text-red-500 text-sm">{error}</p>
             )}
@@ -213,9 +213,9 @@ const Deliver: React.FC = () => {
               <option value={3}>Base Station 3</option>
             </select>
           </label>
-          <div className="h-6 mt-2 ">
+          <div className="h-6 mt-2">
             {error && (
-              <p className="text-red-500 text-sm">{error}</p>
+              <p className="text-red-500 text-sm text-center">{error}</p>
             )}
           </div>
         </div>
@@ -241,9 +241,9 @@ const Deliver: React.FC = () => {
               <option value={3}>Base Station 3</option>
             </select>
           </label>
-          <div className="h-6 mt-2 ">
+          <div className="h-6 mt-2">
             {error && (
-              <p className="text-red-500 text-sm">{error}</p>
+              <p className="text-red-500 text-sm text-center">{error}</p>
             )}
           </div>
         </div>
@@ -334,7 +334,7 @@ const Deliver: React.FC = () => {
         <h1 className="text-2xl font-bold">{screens[currentStep].title}</h1>
         <p className="text-gray-600 mt-2">{screens[currentStep].description}</p>
       </div>
-      <div className="flex h-2/3 justify-center items-center bg-slate-50 w-full">{screens[currentStep].content}</div>
+      <div className="flex h-2/3 justify-center items-center w-full">{screens[currentStep].content}</div>
       {showBackButton && (
         <button
           onClick={handleBack}
