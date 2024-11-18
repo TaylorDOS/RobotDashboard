@@ -68,7 +68,7 @@ const Deliver: React.FC = () => {
       setShowNextButton(false);
       setShowBackButton(false);
     }
-     else {
+    else {
       setShowNextButton(true);
       setShowBackButton(true);
     }
@@ -329,34 +329,38 @@ const Deliver: React.FC = () => {
   }, [currentStep]);
 
   return (
-    <div className="max-w-screen-lg mx-auto h-[90vh] flex flex-col justify-between items-center">
+    <div className="mx-auto h-[90vh] flex flex-col justify-between items-center">
       <div className="relative w-full bg-gray-200 h-2">
         <div
           className="bg-blue-500 h-2 rounded-full"
           style={{ width: `${progress}%` }}
         />
       </div>
-      <div className="h-1/3 w-full flex flex-col justify-center items-center text-center">
-        <h1 className="text-2xl font-bold">{screens[currentStep].title}</h1>
-        <p className="text-gray-600 mt-2">{screens[currentStep].description}</p>
+      <div className="max-w-screen-lg w-full h-full">
+        <div className="h-1/3 flex flex-col justify-center items-center text-center">
+          <h1 className="text-2xl font-bold">{screens[currentStep].title}</h1>
+          <p className="text-gray-600 mt-2">{screens[currentStep].description}</p>
+        </div>
+        <div className="flex h-2/3 justify-center items-center w-full">{screens[currentStep].content}</div>
+        {showBackButton && (
+          <button
+            onClick={handleBack}
+            className="absolute top-28 left-4 px-4 py-2 bg-gray-200 text-gray-800 rounded"
+          >
+            Back
+          </button>
+        )}
+        {showNextButton && (
+          <button
+            onClick={handleNext}
+            className="absolute top-28 right-4 px-4 py-2 bg-gray-200 text-gray-800 rounded"
+          >
+            Next
+          </button>
+        )}
+
       </div>
-      <div className="flex h-2/3 justify-center items-center w-full">{screens[currentStep].content}</div>
-      {showBackButton && (
-        <button
-          onClick={handleBack}
-          className="absolute top-28 left-4 px-4 py-2 bg-gray-200 text-gray-800 rounded"
-        >
-          Back
-        </button>
-      )}
-      {showNextButton && (
-        <button
-          onClick={handleNext}
-          className="absolute top-28 right-4 px-4 py-2 bg-gray-200 text-gray-800 rounded"
-        >
-          Next
-        </button>
-      )}
+
     </div>
   );
 };
