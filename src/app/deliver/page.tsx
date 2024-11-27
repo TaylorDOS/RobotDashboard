@@ -149,7 +149,7 @@ const Deliver: React.FC = () => {
       description: "Choose the parcel size for your delivery.",
       content: (
         <div>
-          <div className="grid grid-cols-3 gap-4 mt-4">
+          <div className="grid lg:grid-cols-3 gap-4 mt-4">
             <button
               className={`flex flex-col items-center justify-center w-32 h-32 rounded shadow ${selectedSize === "Small"
                 ? "bg-blue-500 text-white"
@@ -206,7 +206,7 @@ const Deliver: React.FC = () => {
               onChange={(e) => setPickup(e.target.value ? Number(e.target.value) : null)}
             >
               <option value="" disabled>
-                Select a base station
+                Select pickup base station
               </option>
               <option value={1}>Base Station 1</option>
               <option value={2}>Base Station 2</option>
@@ -227,14 +227,13 @@ const Deliver: React.FC = () => {
       content: (
         <div className="w-1/2">
           <label className="block">
-            Select Drop Off Base Station:
             <select
               className="border border-gray-300 rounded p-2 mt-2 w-full"
               value={dropoff === null ? "" : dropoff}
               onChange={(e) => setDropoff(Number(e.target.value))}
             >
               <option value="" disabled>
-                Select an option
+                Select dropoff base station
               </option>
               <option value={1}>Base Station 1</option>
               <option value={2}>Base Station 2</option>
@@ -311,10 +310,13 @@ const Deliver: React.FC = () => {
       ),
     },
     {
-      title: "Status",
+      title: "Progress",
       description: "Check the status of your delivery.",
       content: (
-        <StatusBar status={status} timestamp={timestamp} />
+        <div className="w-full mx-8">
+          <StatusBar status={status} timestamp={timestamp} />
+        </div>
+
       ),
     },
   ];
