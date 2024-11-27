@@ -35,8 +35,7 @@ const FRONTEND: Command[] = [
   {
     status: "Waiting",
     name: "Reset",
-    fields: [
-    ],
+    fields: [],
   },
   {
     status: "Moving to Start",
@@ -69,6 +68,19 @@ const MIRFLEET: Command[] = [
   },
 ];
 
+const LED: Command[] = [
+  {
+    status: "LED On",
+    name: "on",
+    fields: [],
+  },
+  {
+    status: "LED Off",
+    name: "off",
+    fields: [],
+  },
+];
+
 const ENDPOINT =
   "https://4oomdu5wr0.execute-api.ap-southeast-1.amazonaws.com/default/WebHooks";
 
@@ -76,7 +88,7 @@ const Simulator: React.FC = () => {
   const [loading, setLoading] = useState<boolean>(false);
   const [successMessage, setSuccessMessage] = useState<string>("");
   const [errorMessage, setErrorMessage] = useState<string>("");
-  const [activeTab, setActiveTab] = useState<"ESP32" | "Frontend" | "MiRFleet">("Frontend");
+  const [activeTab, setActiveTab] = useState<"ESP32" | "Frontend" | "MiRFleet" | "LED">("Frontend");
   const [activeCommand, setActiveCommand] = useState<Command | null>(null);
   const [formData, setFormData] = useState<Record<string, string>>({});
   const [status, setStatus] = useState<string>("None");
@@ -149,17 +161,18 @@ const Simulator: React.FC = () => {
         return FRONTEND;
       case "MiRFleet":
         return MIRFLEET;
+      case "LED":
+        return LED;
       default:
         return [];
     }
   };
 
-
   return (
     <div className="max-w-screen-lg mx-auto">
       <div className="mx-4 mt-4">
         <h1 className="text-4xl font-bold mb-4">Commands Simulator</h1>
-        <div>Simulate different commands from the frontend, ESP32, and MiR Fleet Integration API to ensure AWS Lambda responds correctly.</div>
+        <div>Simulate different commands from the frontend, ESP32, MiR Fleet Integration, and LED Control to ensure AWS Lambda responds correctly.</div>
 
         {/* Tab Navigation */}
         <div className="flex mb-8 border-b">
@@ -180,6 +193,12 @@ const Simulator: React.FC = () => {
             className={`px-4 py-2 text-lg font-semibold ${activeTab === "ESP32" ? "border-b-2 border-blue-500" : ""}`}
           >
             ESP32
+          </button>
+          <button
+            onClick={() => setActiveTab("LED")}
+            className={`px-4 py-2 text-lg font-semibold ${activeTab === "LED" ? "border-b-2 border-blue-500" : ""}`}
+          >
+            LED
           </button>
         </div>
 
@@ -241,7 +260,6 @@ const Simulator: React.FC = () => {
         <StatusBar status={status} timestamp={timestamp} />
 
       </div>
-
     </div>
   );
 };
