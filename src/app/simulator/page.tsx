@@ -134,7 +134,11 @@ const Simulator: React.FC = () => {
       payload[field.name] = formData[field.name];
     }
     axios
-      .post(ENDPOINT, payload)
+      .post(ENDPOINT, payload, {
+        headers: {
+          "Content-Type": "application/json",
+        },
+      })
       .then(() => {
         setSuccessMessage(`${activeCommand.name} sent successfully!`);
         sendStatusUpdate(activeCommand.status)
