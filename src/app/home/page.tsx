@@ -1,31 +1,36 @@
-"use client"
-import { useState, useEffect } from 'react';
-import axios from 'axios';
-import StatusBar from '@/components/StatusBar';
+"use client";
+
+import { useSession } from "next-auth/react";
+import { useState, useEffect } from "react";
+import axios from "axios";
+import StatusBar from "@/components/StatusBar";
+import AccessDenied from "@/components/AccessDenied";
 
 const Dashboard: React.FC = () => {
-  const [loading, setLoading] = useState<boolean>(false);
-  const [start, setStart] = useState<string>('');
-  const [end, setEnd] = useState<string>('');
-  const [loadCompartment, setLoadCompartment] = useState<string>('');
-  const [unloadCompartment, setUnloadCompartment] = useState<string>('');
-  const [status, setStatus] = useState<string>("None");
+  const { data: session, status } = useSession();
+  const isLoading = status === "loading";
+
+  const [start, setStart] = useState<string>("");
+  const [end, setEnd] = useState<string>("");
+  const [loadCompartment, setLoadCompartment] = useState<string>("");
+  const [unloadCompartment, setUnloadCompartment] = useState<string>("");
+  const [statusMessage, setStatusMessage] = useState<string>("None");
   const [timestamp, setTimestamp] = useState<number | null>(null);
 
-  const steps = ['Waiting', 'Moving to Start', 'Pickup', 'Moving to Dropoff', 'Dropoff', 'Done'];
+  const steps = ["Waiting", "Moving to Start", "Pickup", "Moving to Dropoff", "Dropoff", "Done"];
 
   const fetchStatus = async () => {
     try {
-      const response = await fetch('/api/status');
+      const response = await fetch("/api/status");
       if (response.ok) {
         const data = await response.json();
-        setStatus(data.status);
+        setStatusMessage(data.status);
         setTimestamp(data.timestamp);
       } else {
-        console.error('Failed to fetch status');
+        console.error("Failed to fetch status");
       }
     } catch (error) {
-      console.error('Error fetching status:', error);
+      console.error("Error fetching status:", error);
     }
   };
 
@@ -38,21 +43,28 @@ const Dashboard: React.FC = () => {
   const handleDropdownAction = () => {
     const requestPayload = {
       message: "InitiateLoading",
-      start: start,
-      end: end,
-      loadCompartment: loadCompartment,
-      unloadCompartment: unloadCompartment,
+      start,
+      end,
+      loadCompartment,
+      unloadCompartment,
     };
 
-    axios.post('https://4oomdu5wr0.execute-api.ap-southeast-1.amazonaws.com/default/WebHooks', requestPayload)
-      .then(response => {
-        setStatus('Initiate Loading!');
+    axios
+      .post("https://4oomdu5wr0.execute-api.ap-southeast-1.amazonaws.com/default/WebHooks", requestPayload)
+      .then(() => {
+        setStatusMessage("Initiate Loading!");
       })
-      .catch(error => {
-        setStatus('Error executing dropdown action.');
-        console.error('Error:', error);
+      .catch((error) => {
+        setStatusMessage("Error executing dropdown action.");
+        console.error("Error:", error);
       });
   };
+
+  // 🔹 Show loading state while checking authentication
+  if (isLoading) return <div className="text-center mt-8">Loading...</div>;
+
+  // 🔹 If user is not logged in, show AccessDenied page
+  if (!session) return <AccessDenied />;
 
   return (
     <div className="max-w-screen-lg mx-auto">
