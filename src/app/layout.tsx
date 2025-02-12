@@ -3,7 +3,7 @@ import "./globals.css";
 import { Open_Sans } from "next/font/google";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
-import { Providers } from "@/components/Providers"; // ✅ Use Providers
+import { Providers } from "@/components/Providers";
 
 const openSans = Open_Sans({
   weight: ["700"],
@@ -22,8 +22,9 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={`${openSans.variable} antialiased`}>
+        
+        <Providers>
         <Navbar />
-        <Providers> {/* ✅ Wrap the app inside Providers.tsx */}
           {children}
         </Providers>
         <Footer />

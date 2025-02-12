@@ -14,49 +14,59 @@ import {
 } from '@mui/material';
 
 interface Log {
-  commands: string;
+  taskID: number;
   status: string;
   progress: string;
-  start: string;
-  end: string;
-  loadCompartment: string;
-  unloadCompartment: string;
+  start_station: string;
+  end_station: string;
+  slot: number;
   priority: number;
+  timeslot: number;
   timestamp: number;
 }
+
+interface Station {
+  station: string;
+  slot: number;
+  status: boolean;
+}
+
 
 const Log: React.FC = () => {
   const [logs, setLogs] = useState<Log[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
   const [order, setOrder] = useState<'asc' | 'desc'>('desc');
   const [orderBy, setOrderBy] = useState<keyof Log>('timestamp');
+
   useEffect(() => {
     fetchLogs();
   }, []);
 
-  const fetchLogs = () => {
+  const fetchLogs = async () => {
     setLoading(true);
-    axios.get('https://umsfyussf6.execute-api.ap-southeast-1.amazonaws.com/default/DynamoRetrieve')
-      .then((response) => {
-        const formattedLogs: Log[] = response.data.map((log: any) => ({
-          commands: log.commands || "N/A",
-          status: log.status || "N/A",
-          progress: log.progress || "N/A",
-          start: log.start || "N/A",
-          end: log.end || "N/A",
-          loadCompartment: log.loadCompartment || "N/A",
-          unloadCompartment: log.unloadCompartment || "N/A",
-          priority: log.priority ?? 0, // Use 0 if priority is missing
-          timestamp: log.timestamp || Date.now(),
-        }));
-        setLogs(formattedLogs);
-      })
-      .catch((error) => {
-        console.error('Error fetching logs:', error);
-      })
-      .finally(() => {
-        setLoading(false);
+    try {
+      const response = await axios.get('https://umsfyussf6.execute-api.ap-southeast-1.amazonaws.com/default/DynamoRetrieve', {
+        params: { message: "TaskQueue" }  // Pass the query parameter
       });
+
+      const formattedLogs: Log[] = response.data.map((log: any) => ({
+        taskID: log.taskID || "N/A",
+        status: log.status || "N/A",
+        progress: log.progress || "N/A",
+        start_station: log.start_station || "N/A",
+        end_station: log.end_station || "N/A",
+        slot: log.slot || 0,
+        priority: log.priority ?? 0,
+        timeslot: log.timeslot || 0,
+        timestamp: log.timestamp || Date.now(),
+      }));
+
+      setLogs(formattedLogs);
+    } catch (error) {
+      console.error('Error fetching logs:', error);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleRequestSort = (property: keyof Log) => {
@@ -69,8 +79,33 @@ const Log: React.FC = () => {
     if (orderBy === 'timestamp') {
       return order === 'asc' ? a.timestamp - b.timestamp : b.timestamp - a.timestamp;
     }
-    return 0; // Default sorting by timestamp, you can adjust if other properties need sorting.
+    return 0;
   });
+
+  const [stations, setStations] = useState<Station[]>([]);
+  const [loadingStations, setLoadingStations] = useState<boolean>(false);
+
+  const fetchBaseStationAvailability = async () => {
+    setLoadingStations(true);
+    try {
+      const response = await axios.get(
+        "https://umsfyussf6.execute-api.ap-southeast-1.amazonaws.com/default/DynamoRetrieve",
+        { params: { message: "BaseStationAvailability" } }
+      );
+
+      const formattedStations: Station[] = response.data.map((station: any) => ({
+        station: station.station || "N/A",
+        slot: station.slot || 0,
+        status: station.status ?? false,
+      }));
+
+      setStations(formattedStations);
+    } catch (error) {
+      console.error("Error fetching base station availability:", error);
+    } finally {
+      setLoadingStations(false);
+    }
+  };
 
   return (
     <div className="max-w-screen-lg mx-auto mt-8">
@@ -92,15 +127,13 @@ const Log: React.FC = () => {
             <Table>
               <TableHead>
                 <TableRow>
-                  <TableCell>
-                    TaskID
-                  </TableCell>
+                  <TableCell>TaskID</TableCell>
                   <TableCell>Status</TableCell>
                   <TableCell>Progress</TableCell>
                   <TableCell>Start</TableCell>
                   <TableCell>End</TableCell>
-                  <TableCell>LoadC</TableCell>
-                  <TableCell>UnloadC</TableCell>
+                  <TableCell>Slot</TableCell>
+                  <TableCell>Timeslot</TableCell>
                   <TableCell>Priority</TableCell>
                   <TableCell>
                     <TableSortLabel
@@ -115,15 +148,15 @@ const Log: React.FC = () => {
               </TableHead>
               <TableBody>
                 {sortedLogs.map((log) => (
-                  <TableRow key={log.commands}>
-                    <TableCell>{log.commands}</TableCell>
+                  <TableRow key={log.taskID}>
+                    <TableCell>{log.taskID}</TableCell>
                     <TableCell>{log.status}</TableCell>
                     <TableCell>{log.progress}</TableCell>
-                    <TableCell>{log.start}</TableCell>
-                    <TableCell>{log.end}</TableCell>
-                    <TableCell>{log.loadCompartment}</TableCell>
-                    <TableCell>{log.unloadCompartment}</TableCell>
+                    <TableCell>{log.start_station}</TableCell>
+                    <TableCell>{log.end_station}</TableCell>
+                    <TableCell>{log.slot}</TableCell>
                     <TableCell>{log.priority}</TableCell>
+                    <TableCell>{log.timeslot}</TableCell>
                     <TableCell>{new Date(log.timestamp).toLocaleString()}</TableCell>
                   </TableRow>
                 ))}
@@ -135,8 +168,40 @@ const Log: React.FC = () => {
         )
       )}
 
-    </div>
+      <div className="flex justify-between items-center mt-10 mb-6">
+        <h1 className="text-4xl font-bold">Base Station Availability</h1>
+        <button color="primary" onClick={fetchBaseStationAvailability}>
+          Reload Availability
+        </button>
+      </div>
 
+      {loadingStations ? (
+        <div>Loading...</div>
+      ) : stations.length > 0 ? (
+        <TableContainer component={Paper}>
+          <Table>
+            <TableHead>
+              <TableRow>
+                <TableCell>Station ID</TableCell>
+                <TableCell>Slot</TableCell>
+                <TableCell>Availability</TableCell>
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {stations.map((station) => (
+                <TableRow key={`${station.station}-${station.slot}`}>
+                  <TableCell>{station.station}</TableCell>
+                  <TableCell>{station.slot}</TableCell>
+                  <TableCell>{station.status ? "Available" : "Unavailable"}</TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </TableContainer>
+      ) : (
+        <div>No station availability data to display</div>
+      )}
+    </div>
   );
 };
 

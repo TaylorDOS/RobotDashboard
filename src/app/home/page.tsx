@@ -7,9 +7,8 @@ import StatusBar from "@/components/StatusBar";
 import AccessDenied from "@/components/AccessDenied";
 
 const Dashboard: React.FC = () => {
-  const { data: session, status } = useSession();
-  const isLoading = status === "loading";
-
+  const { data: session, status: authStatus } = useSession(); 
+  const isLoading = authStatus === "loading";
   const [start, setStart] = useState<string>("");
   const [end, setEnd] = useState<string>("");
   const [loadCompartment, setLoadCompartment] = useState<string>("");
@@ -66,10 +65,12 @@ const Dashboard: React.FC = () => {
   // 🔹 If user is not logged in, show AccessDenied page
   if (!session) return <AccessDenied />;
 
+  const username = session.user?.email || "Operator";
+
   return (
     <div className="max-w-screen-lg mx-auto">
       <div className='mx-4 lg:mx-0'>
-        <h1 className="mt-8 text-4xl font-bold">Welcome, operator</h1>
+        <h1 className="mt-8 text-4xl font-bold">Welcome, {username}</h1>
         <div className="text-md mb-4">Assign a delivery task by selecting the start and end points, choosing load and unload compartments, and initiating the process. Monitor the task progress and ensure smooth operations across all steps.</div>
         <div className="lg:flex w-full mt-4 gap-16 justify-start items-start">
           <div className="flex flex-col lg:w-1/2 mr-4">
