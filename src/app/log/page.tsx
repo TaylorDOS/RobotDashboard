@@ -31,6 +31,11 @@ interface Station {
   status: boolean;
 }
 
+interface TopUnit {
+  slot: number;
+  [key: string]: boolean | string; // Allows dynamic slot numbers (1-12)
+}
+
 
 const Log: React.FC = () => {
   const [logs, setLogs] = useState<Log[]>([]);
@@ -40,13 +45,15 @@ const Log: React.FC = () => {
 
   useEffect(() => {
     fetchLogs();
+    fetchBaseStationAvailability();
+    fetchTopUnitAvailability();
   }, []);
 
   const fetchLogs = async () => {
     setLoading(true);
     try {
       const response = await axios.get('https://umsfyussf6.execute-api.ap-southeast-1.amazonaws.com/default/DynamoRetrieve', {
-        params: { message: "TaskQueue" }  // Pass the query parameter
+        params: { message: "TaskQueue" }
       });
 
       const formattedLogs: Log[] = response.data.map((log: any) => ({
@@ -107,6 +114,29 @@ const Log: React.FC = () => {
     }
   };
 
+  const [topUnits, setTopUnits] = useState<TopUnit[]>([]);
+  const [loadingTopUnits, setLoadingTopUnits] = useState<boolean>(false);
+
+  const fetchTopUnitAvailability = async () => {
+    setLoadingTopUnits(true);
+    try {
+      const response = await axios.get(
+        "https://umsfyussf6.execute-api.ap-southeast-1.amazonaws.com/default/DynamoRetrieve",
+        { params: { message: "TopUnitAvailability" } }
+      );
+
+      const formattedTopUnits: TopUnit[] = response.data.map((unit: any) => ({
+        slot: unit.slot || 0,
+        ...unit
+      }));
+
+      setTopUnits(formattedTopUnits);
+    } catch (error) {
+      console.error("Error fetching top unit availability:", error);
+    } finally {
+      setLoadingTopUnits(false);
+    }
+  };
   return (
     <div className="max-w-screen-lg mx-auto mt-8">
       <div className='mx-4 lg:mx-0 flex'>
@@ -170,8 +200,9 @@ const Log: React.FC = () => {
 
       <div className="flex justify-between items-center mt-10 mb-6">
         <h1 className="text-4xl font-bold">Base Station Availability</h1>
-        <button color="primary" onClick={fetchBaseStationAvailability}>
-          Reload Availability
+        <button
+          onClick={fetchBaseStationAvailability}
+          className="mx-8 mb-4 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600">Reload
         </button>
       </div>
 
@@ -201,8 +232,48 @@ const Log: React.FC = () => {
       ) : (
         <div>No station availability data to display</div>
       )}
+
+      <div className="flex justify-between items-center mt-10 mb-6">
+        <h1 className="text-4xl font-bold">Top Unit Availability</h1>
+        <button
+          onClick={fetchTopUnitAvailability}
+          className="mx-8 mb-4 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600">
+          Reload
+        </button>
+      </div>
+
+      {loadingTopUnits ? (
+        <div>Loading...</div>
+      ) : topUnits.length > 0 ? (
+        <TableContainer component={Paper}>
+          <Table>
+            <TableHead>
+              <TableRow>
+                <TableCell>Slot</TableCell>
+                {[...Array(24)].map((_, index) => (
+                  <TableCell key={`slot-${index + 1}`}>{index + 1}</TableCell>
+                ))}
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {topUnits.map((unit) => (
+                <TableRow key={unit.slot}>
+                  <TableCell>{unit.slot}</TableCell>
+                  {[...Array(24)].map((_, index) => (
+                    <TableCell key={`status-${unit.station}-${index + 1}`}>
+                      {unit[index + 1] ? "Available" : "Unavailable"}
+                    </TableCell>
+                  ))}
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </TableContainer>
+      ) : (
+        <div>No top unit availability data to display</div>
+      )}
     </div>
-  );
+      );
 };
 
-export default Log;
+      export default Log;

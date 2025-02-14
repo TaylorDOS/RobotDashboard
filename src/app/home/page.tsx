@@ -8,6 +8,7 @@ import AccessDenied from "@/components/AccessDenied";
 
 const Dashboard: React.FC = () => {
   const { data: session, status: authStatus } = useSession(); 
+  const [status, setStatus] = useState<string>("None");
   const isLoading = authStatus === "loading";
   const [start, setStart] = useState<string>("");
   const [end, setEnd] = useState<string>("");
@@ -20,16 +21,16 @@ const Dashboard: React.FC = () => {
 
   const fetchStatus = async () => {
     try {
-      const response = await fetch("/api/status");
+      const response = await fetch('/api/status');
       if (response.ok) {
         const data = await response.json();
-        setStatusMessage(data.status);
+        setStatus(data.status);
         setTimestamp(data.timestamp);
       } else {
-        console.error("Failed to fetch status");
+        console.error('Failed to fetch status');
       }
     } catch (error) {
-      console.error("Error fetching status:", error);
+      console.error('Error fetching status:', error);
     }
   };
 
@@ -59,10 +60,8 @@ const Dashboard: React.FC = () => {
       });
   };
 
-  // 🔹 Show loading state while checking authentication
   if (isLoading) return <div className="text-center mt-8">Loading...</div>;
 
-  // 🔹 If user is not logged in, show AccessDenied page
   if (!session) return <AccessDenied />;
 
   const username = session.user?.email || "Operator";
@@ -117,7 +116,6 @@ const Dashboard: React.FC = () => {
           <div className="mt-8 lg:mt-0 lg:w-1/2 flex flex-col">
             <span className="text-md font-medium mb-2 text-center">Map Region</span>
             <div className="w-full aspect-video bg-slate-200">
-              {/* Map content */}
             </div>
           </div>
           <div>
