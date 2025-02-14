@@ -33,7 +33,7 @@ interface Station {
 
 interface TopUnit {
   slot: number;
-  [key: string]: boolean | string; // Allows dynamic slot numbers (1-12)
+  [key: string]: string | boolean | number;
 }
 
 
