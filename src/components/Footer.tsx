@@ -1,10 +1,9 @@
 import Link from "next/link";
 import Image from "next/image";
 import React from "react";
-import { Container } from "@/components/Container";
 
 export function Footer() {
-  const navigation = ["Home", "Logs", "Setup", "About"];
+  const navigation = ["Home", "Setup", "About"];
   return (
     <div className="relative mx-auto max-w-screen-lg">
         <div className="lg:mx-0 mx-8 grid lg:grid-cols-3  pt-8 mt-5 border-t border-gray-200 dark:border-trueGray-700">
@@ -16,7 +15,7 @@ export function Footer() {
                 className="flex items-center space-x-2 text-2xl font-bold dark:text-gray-100"
               >
                 <Image
-                  src="/img/logo.svg"
+                  src="/img/logo.png"
                   alt="N"
                   width="32"
                   height="32"

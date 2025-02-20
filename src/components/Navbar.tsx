@@ -22,7 +22,6 @@ export const Navbar = () => {
     { name: "Home", href: "/home" },
     { name: "Deliver", href: "/deliver" },
     { name: "Simulator", href: "/simulator" },
-    { name: "Logs", href: "/log" },
     { name: "About", href: "/about" },
   ];
 
@@ -49,7 +48,7 @@ export const Navbar = () => {
                 <span className="flex items-center space-x-2 text-2xl text-customRed">
                   <span>
                     <Image
-                      src="/img/logo.svg"
+                      src="/img/logo.png"
                       alt="Logo"
                       width={100}
                       height={100}
@@ -57,7 +56,7 @@ export const Navbar = () => {
                     />
                   </span>
                   <span className="font-bold">
-                    Dashboard
+                    RobotDashboard
                   </span>
                 </span>
               </Link>

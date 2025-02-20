@@ -23,6 +23,7 @@ interface Log {
   priority: number;
   timeslot: number;
   timestamp: number;
+  receiver: string;
 }
 
 interface Station {
@@ -58,6 +59,7 @@ const Log: React.FC = () => {
 
       const formattedLogs: Log[] = response.data.map((log: any) => ({
         taskID: log.taskID || "N/A",
+        receiver: log.receiver || "N/A",
         status: log.status || "N/A",
         progress: log.progress || "N/A",
         start_station: log.start_station || "N/A",
@@ -158,6 +160,7 @@ const Log: React.FC = () => {
               <TableHead>
                 <TableRow>
                   <TableCell>TaskID</TableCell>
+                  <TableCell>Receiver</TableCell>
                   <TableCell>Status</TableCell>
                   <TableCell>Progress</TableCell>
                   <TableCell>Start</TableCell>
@@ -180,6 +183,7 @@ const Log: React.FC = () => {
                 {sortedLogs.map((log) => (
                   <TableRow key={log.taskID}>
                     <TableCell>{log.taskID}</TableCell>
+                    <TableCell>{log.receiver}</TableCell>
                     <TableCell>{log.status}</TableCell>
                     <TableCell>{log.progress}</TableCell>
                     <TableCell>{log.start_station}</TableCell>
