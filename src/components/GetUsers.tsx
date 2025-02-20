@@ -1,14 +1,14 @@
 import { CognitoIdentityProviderClient, ListUsersCommand } from "@aws-sdk/client-cognito-identity-provider";
 
 // Ensure environment variables are set
-const userPoolId = process.env.NEXT_PUBLIC_COGNITO_USER_POOL_ID;
+const userPoolId = process.env.COGNITO_USER_POOL_ID;
 
 // Initialize Cognito Client
 const client = new CognitoIdentityProviderClient({
     region: "ap-southeast-1",
     credentials: {
-      accessKeyId: process.env.NEXT_PUBLIC_AWS_ACCESS_KEY_ID!,
-      secretAccessKey: process.env.NEXT_PUBLIC_AWS_SECRET_ACCESS_KEY!,
+      accessKeyId: process.env.AWS_ACCESS_KEY_ID!,
+      secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY!,
     },
   });
 
