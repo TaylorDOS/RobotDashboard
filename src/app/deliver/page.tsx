@@ -150,8 +150,10 @@ const Deliver: React.FC = () => {
           </select>
 
           <div className="h-6 text-center mt-8">
-            {error && <p className="text-red-500 text-sm">{error}</p>}
-          </div>
+                {error && <p className="text-red-500 text-sm">{error}</p>}
+              </div>
+
+          
         </div>
       ),
     },
