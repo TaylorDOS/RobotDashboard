@@ -6,7 +6,7 @@ import axios from "axios";
 import StatusBar from "@/components/StatusBar";
 import AccessDenied from "@/components/AccessDenied";
 
-const Dashboard: React.FC = () => {
+const Notification: React.FC = () => {
   const { data: session, status: authStatus } = useSession(); 
   const [status, setStatus] = useState<string>("None");
   const isLoading = authStatus === "loading";
@@ -127,4 +127,4 @@ const Dashboard: React.FC = () => {
   );
 };
 
-export default Dashboard;
+export default Notification;

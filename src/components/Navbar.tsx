@@ -20,7 +20,7 @@ export const Navbar = () => {
 
   const navigation = [
     { name: "Home", href: "/home" },
-    { name: "Deliver", href: "/deliver" },
+    { name: "Notification", href: "/notification" },
     { name: "Simulator", href: "/simulator" },
     { name: "About", href: "/about" },
   ];
@@ -100,12 +100,12 @@ export const Navbar = () => {
                 {session ? (
                   <button
                     onClick={() => signOut()}
-                    className="px-6 py-3 text-white bg-gray-700 rounded-md text-md"
+                    className="mt-4 px-6 py-2 text-white bg-red-500 rounded-md text-md"
                   >
                     Sign Out
                   </button>
                 ) : (
-                  <Link href="/api/auth/signin" className="px-6 py-3 text-white bg-blue-600 rounded-md text-md">
+                  <Link href="/api/auth/signin" className="mt-4 px-6 py-2 text-white bg-blue-600 rounded-md text-md">
                     Sign In
                   </Link>
                 )}

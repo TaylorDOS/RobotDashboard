@@ -1,14 +1,17 @@
 "use client";
-import Image from "next/image";
 import { useSession } from "next-auth/react";
 import { useEffect, useState } from "react";
 import axios from "axios";
-import { listUsers, CognitoUser } from "@/components/GetUsers";
 import { getBaseStationAvailability, BaseStation } from "@/utils/getBaseStationAvailability";
 import AccessDenied from "@/components/AccessDenied";
 import { FiArrowLeft, FiArrowRight, FiRefreshCw } from "react-icons/fi";
 
-const Home: React.FC = () => {
+interface CognitoUser {
+  username: string;
+  email: string;
+}
+
+const Deliver: React.FC = () => {
   const { data: session, status: authStatus } = useSession();
   const isLoading = authStatus === "loading";
   const generateTaskID = () => {
@@ -36,17 +39,23 @@ const Home: React.FC = () => {
   const [showNextButton, setShowNextButton] = useState(true);
   const [showBackButton, setShowBackButton] = useState(false);
 
-  useEffect(() => {
-    const fetchUsers = async () => {
-      try {
-        console.log("Fetching users from Cognito...");
-        const usersList = await listUsers();
-        console.log("Users retrieved:", usersList);
-        setUsers(usersList);
-      } catch (error) {
-        console.error("Error fetching Cognito users:", error);
+  const fetchUsers = async () => {
+    try {
+      const response = await fetch("/api/getUsers");
+      if (!response.ok) {
+        throw new Error("Failed to fetch users");
       }
-    };
+
+      const usersList = await response.json();
+      console.log("Users retrieved successfully:", usersList);
+      setUsers(usersList);
+    } catch (error) {
+      console.error("Error fetching Cognito users:", error);
+    }
+  };
+
+
+  useEffect(() => {
 
     if (currentStep === 0) {
       fetchUsers();
@@ -94,7 +103,6 @@ const Home: React.FC = () => {
       priority: priority,
       taskID: taskID,
       receiver: selectedUser,
-      timeslot: 1,
     };
 
     axios.post('https://4oomdu5wr0.execute-api.ap-southeast-1.amazonaws.com/default/WebHooks', requestPayload)
@@ -133,9 +141,9 @@ const Home: React.FC = () => {
       title: "Who are you delivering to?",
       description: "Select a recipient for your delivery",
       content: (
-        <div className="flex flex-col items-center">
+        <div className="flex flex-col items-center justify-center w-full max-w-lg mx-auto h-full">
           <select
-            className="border border-gray-300 rounded p-2 mt-2 w-72"
+            className="border border-gray-300 rounded p-2 mt-2 w-full"
             value={selectedUser}
             onChange={handleUserChange}
           >
@@ -159,16 +167,14 @@ const Home: React.FC = () => {
       title: "Select Your Pickup & Drop-off Locations",
       description: "Select the nearest pickup and drop-off stations based on availability.",
       content: (
-        <div className="w-full flex flex-col items-center justify-top mx-8">
+        <div className="w-full h-full flex flex-col items-center justify-top mx-8">
           <div className="w-full flex flex-row justify-center items-center gap-8">
-            <div className="mb-2 font-semibold">Base Station Availability</div>
+            <div className="mb-2 text-xl font-semibold">Base Station Status</div>
             <button
               onClick={fetchStations}
-              className=" py-2 px-4 flex items-center justify-center bg-blue-400 text-white rounded-lg hover:bg-blue-600 transition duration-300 shadow-md"
+              className="w-12 h-12 flex items-center justify-center bg-blue-400 text-white rounded-full hover:bg-blue-600 transition duration-300 shadow-md"
             >
-              <FiRefreshCw className="text-2xl" />
-              <div className="ml-2">Refresh
-              </div>
+              <FiRefreshCw className="text-xl" />
             </button>
           </div>
           {baseStations === null ? (
@@ -176,16 +182,19 @@ const Home: React.FC = () => {
           ) : (
             <div className="w-full flex flex-col items-center my-12">
 
-              <div className="grid grid-cols-3 gap-8 w-full max-w-4xl">
+              <div className="grid grid-cols-3 gap-8 max-w-4xl">
                 {baseStations.map((station) => (
-                  <div key={station.station} className="border border-gray-300 rounded-lg p-4 w-full shadow-lg">
-                    <h3 className="text-lg font-bold text-center mb-2">{station.station}</h3>
-                    <div className="flex flex-wrap gap-2 justify-center">
-                      {station.slots.map((slot) => (
+                  <div key={station.station} className="border border-gray-300 rounded-lg p-4 w-full shadow-lg bg-white">
+                    {/* Station Title */}
+                    <h3 className="text-lg font-bold text-center mb-4">{station.station}</h3>
+
+                    <div>
+                      {station.slots.map((slot, index) => (
                         <div
                           key={slot.slot}
-                          className={`w-12 h-12 flex items-center justify-center text-white font-bold rounded-md ${slot.status ? "bg-green-500" : "bg-red-500"
-                            }`}
+                          className={`flex items-center justify-center text-white font-bold rounded-md mb-2
+                          ${slot.status ? "bg-green-500" : "bg-red-500"}
+                          ${index === 2 ? "h-20" : "h-12"} w-10`}
                         >
                           {slot.slot}
                         </div>
@@ -287,8 +296,9 @@ const Home: React.FC = () => {
       title: "Describe the item",
       description: "GenAI will be used to determined the priority of your task",
       content: (
-        <div>
-          <div className="mt-6 w-full max-w-lg">
+        <div className="flex flex-col w-full max-w-lg mx-auto">
+          {/* Message Input */}
+          <div className="mt-6 w-full">
             <label className="block font-medium text-lg">Enter Message</label>
             <input
               type="text"
@@ -299,8 +309,7 @@ const Home: React.FC = () => {
             />
           </div>
 
-          {/* Priority Selection */}
-          <div className="mt-4 w-full max-w-lg">
+          <div className="mt-4 w-full">
             <label className="block font-medium text-lg">Select Priority</label>
             <select
               className="border border-gray-300 rounded p-2 mt-2 w-full"
@@ -313,10 +322,10 @@ const Home: React.FC = () => {
               <option value={3}>3 (Lowest)</option>
             </select>
           </div>
+
+          {/* Error Message */}
           <div className="h-6 text-center mt-8">
-            {error && (
-              <p className="text-red-500 text-sm">{error}</p>
-            )}
+            {error && <p className="text-red-500 text-sm">{error}</p>}
           </div>
         </div>
 
@@ -324,27 +333,52 @@ const Home: React.FC = () => {
     },
     {
       title: "Task Confirmation",
-      description: "Double check the order details before proceeding.",
+      description: "Double-check the order details before proceeding.",
       content: (
-        <div className="flex flex-col items-center justify-center">
-          <div className="px-4 py-2 text-black rounded mt-4">
-            <p><strong>Task ID:</strong> {taskID}</p>
-            <p><strong>Message:</strong> AddTask</p>
-            <p><strong>Receiver:</strong> {selectedUser}</p>
-            <p><strong>Pickup:</strong> {pickupStation || "Not selected"}</p>
-            <p><strong>Dropoff:</strong> {dropoffStation || "Not selected"}</p>
-            <p><strong>Selected Slot:</strong> {slot || "Not selected"}</p>
-            <p><strong>Priority:</strong> {priority || "Not selected"}</p>
-            <p><strong>Timeslot:</strong> </p>
-
+        <div className="flex flex-col items-center justify-center w-full max-w-2xl mx-auto">
+          {/* Task Summary Table */}
+          <div className="w-full border border-gray-300 rounded-lg shadow-md bg-white p-4 mt-4">
+            <table className="w-full text-left border-collapse">
+              <tbody>
+                <tr>
+                  <td className="font-semibold p-2 border-b">Task ID:</td>
+                  <td className="p-2 border-b">{taskID}</td>
+                </tr>
+                <tr>
+                  <td className="font-semibold p-2 border-b">Message:</td>
+                  <td className="p-2 border-b">AddTask</td>
+                </tr>
+                <tr>
+                  <td className="font-semibold p-2 border-b">Receiver:</td>
+                  <td className="p-2 border-b">{selectedUser}</td>
+                </tr>
+                <tr>
+                  <td className="font-semibold p-2 border-b">Pickup:</td>
+                  <td className="p-2 border-b">{pickupStation || "Not selected"}</td>
+                </tr>
+                <tr>
+                  <td className="font-semibold p-2 border-b">Dropoff:</td>
+                  <td className="p-2 border-b">{dropoffStation || "Not selected"}</td>
+                </tr>
+                <tr>
+                  <td className="font-semibold p-2 border-b">Selected Slot:</td>
+                  <td className="p-2 border-b">{slot || "Not selected"}</td>
+                </tr>
+                <tr>
+                  <td className="font-semibold p-2 border-b">Priority:</td>
+                  <td className="p-2 border-b">{priority || "Not selected"}</td>
+                </tr>
+              </tbody>
+            </table>
           </div>
+    
+          {/* Submit Button */}
           <button
             onClick={sendRequest}
-            className="px-4 py-2 bg-green-500 text-white rounded mt-4"
+            className="px-6 py-2 bg-green-500 text-white rounded-lg mt-6 hover:bg-green-600 transition duration-300 shadow-md"
           >
             Create Task
           </button>
-
         </div>
       ),
     },
@@ -369,7 +403,6 @@ const Home: React.FC = () => {
       description: "Check the status of your delivery.",
       content: (
         <div className="w-full mx-8">
-          {/* <StatusBar status={status} timestamp={timestamp} /> */}
         </div>
 
       ),
@@ -383,36 +416,42 @@ const Home: React.FC = () => {
   if (!session) return <AccessDenied />;
 
   return (
-    <div className="mx-auto h-[90vh] flex flex-col justify-between items-center">
+    <div className="mx-auto flex flex-col min-h-screen">
       <div className="relative w-full bg-gray-200 h-2">
         <div
           className="bg-blue-500 h-2 rounded-full"
           style={{ width: `${progress}%` }}
         />
       </div>
-      <div className="max-w-screen-lg w-full h-full">
-        <div className="my-16 flex flex-col justify-center items-center text-center">
-          <h1 className="text-2xl font-bold">{screens[currentStep].title}</h1>
-          <p className="text-gray-600 mt-2">{screens[currentStep].description}</p>
-        </div>
-        <div className="flex justify-center items-center w-full">{screens[currentStep].content}</div>
-        {showBackButton && (
-          <button
-            onClick={handleBack}
-            className="absolute top-28 left-4 w-12 h-12 flex items-center justify-center bg-gray-200 text-gray-800 rounded-full hover:bg-gray-300 transition duration-300 shadow-md"
-          >
-            <FiArrowLeft className="text-2xl" />
-          </button>
-        )}
+      <div className="w-full flex flex-col flex-grow justify-center items-center text-center px-4 bg-gradient-to-b from-blue-200 to-transparent">
+        <div className="pt-8 pb-4 lg:flex flex-row items-center w-full max-w-2xl">
+          {showBackButton && (
+            <button
+              onClick={handleBack}
+              className="ml-4 w-12 h-12 shrink-0 flex items-center justify-center bg-blue-500 text-white rounded-full hover:bg-blue-400 transition duration-300 shadow-md"
+            >
+              <FiArrowLeft className="text-2xl" />
+            </button>
+          )}
 
-        {showNextButton && (
-          <button
-            onClick={handleNext}
-            className="absolute bottom-30 left-1/2 transform -translate-x-1/2 w-12 h-12 flex items-center justify-center bg-gray-200 text-gray-800 rounded-full hover:bg-gray-300 transition duration-300 shadow-md"
-          >
-            <FiArrowRight className="text-2xl" />
-          </button>
-        )}
+          <div className="mt-8 flex-grow text-center">
+            <h1 className="text-2xl font-bold">{screens[currentStep].title}</h1>
+            <p className="text-gray-600 mt-2">{screens[currentStep].description}</p>
+          </div>
+        </div>
+        <div className="flex flex-col flex-grow justify-top pt-8 items-center h-full w-full">
+          {screens[currentStep].content}
+          {showNextButton && (
+            <div className="flex justify-center w-full h-full mt-8">
+              <button
+                onClick={handleNext}
+                className="w-12 h-12 flex items-center justify-center bg-blue-500 text-white rounded-full hover:bg-blue-400 transition duration-300 shadow-md"
+              >
+                <FiArrowRight className="text-2xl" />
+              </button>
+            </div>
+          )}
+        </div>
 
       </div>
 
@@ -420,4 +459,4 @@ const Home: React.FC = () => {
   );
 };
 
-export default Home;
+export default Deliver;
