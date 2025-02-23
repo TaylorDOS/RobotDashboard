@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import axios from "axios";
 import { getBaseStationAvailability, BaseStation } from "@/utils/getBaseStationAvailability";
 import AccessDenied from "@/components/AccessDenied";
-import { FiArrowLeft, FiArrowRight, FiRefreshCw } from "react-icons/fi";
+import { FiArrowLeft, FiArrowRight } from "react-icons/fi";
 
 interface CognitoUser {
   username: string;
@@ -12,8 +12,7 @@ interface CognitoUser {
 }
 
 const Deliver: React.FC = () => {
-  const { data: session, status: authStatus } = useSession();
-  const isLoading = authStatus === "loading";
+  const { data: session } = useSession();
   const generateTaskID = () => {
     const timestamp = Date.now().toString().slice(-6);
     const randomPart = Math.floor(100 + Math.random() * 900).toString();
@@ -22,6 +21,7 @@ const Deliver: React.FC = () => {
   const [taskID, setTaskID] = useState<string | null>(null);
 
   const [users, setUsers] = useState<CognitoUser[]>([]);
+  const [username, setUsername] = useState<string | null>(null);
   const [selectedUser, setSelectedUser] = useState<string>("");
 
   const [baseStations, setBaseStations] = useState<BaseStation[]>([]);
@@ -31,7 +31,7 @@ const Deliver: React.FC = () => {
 
 
   const [priority, setPriority] = useState<number | "">("");
-  const [x, setX] = useState<string>("");
+  const [description, setDescription] = useState<string>("");
 
   const [error, setError] = useState("");
 
@@ -39,27 +39,63 @@ const Deliver: React.FC = () => {
   const [showNextButton, setShowNextButton] = useState(true);
   const [showBackButton, setShowBackButton] = useState(false);
 
+
   const fetchUsers = async () => {
     try {
-      const response = await fetch("/api/getUsers");
+      console.log("Fetching all users from /api/getUsers...");
+      const response = await fetch("/api/getUsers", {
+        method: "GET",
+        headers: {
+          "Cache-Control": "no-cache, no-store, must-revalidate",
+          "Pragma": "no-cache",
+          "Expires": "0",
+        },
+      });
+
       if (!response.ok) {
         throw new Error("Failed to fetch users");
       }
 
-      const usersList = await response.json();
-      console.log("Users retrieved successfully:", usersList);
+      const usersList: CognitoUser[] = await response.json();
       setUsers(usersList);
+      console.log("Users retrieved:", usersList);
     } catch (error) {
       console.error("Error fetching Cognito users:", error);
     }
   };
 
+  const fetchCurrentUsername = async () => {
+    if (!session?.user?.email) {
+      console.warn("Session email not available yet.");
+      return;
+    }
+    try {
+      const matchedUser = users.find((user) => user.email === session.user?.email);
+      if (matchedUser) {
+        console.log("Current User Found:", matchedUser);
+        setUsername(matchedUser.username);
+      } else {
+        console.warn("No matching user found for email:", session.user.email);
+      }
+    } catch (error) {
+      console.error("Error fetching current username:", error);
+    }
+  };
 
   useEffect(() => {
-
-    if (currentStep === 0) {
+    if (session?.user?.email) {
       fetchUsers();
-    } else if (currentStep === 1) {
+    }
+  }, [session]);
+
+  useEffect(() => {
+    if (users.length > 0 && session?.user?.email) {
+      fetchCurrentUsername();
+    }
+  }, [users]);
+
+  useEffect(() => {
+    if (currentStep === 1) {
       fetchStations();
     } else if (currentStep === 3) {
       setTaskID(generateTaskID());
@@ -103,6 +139,8 @@ const Deliver: React.FC = () => {
       priority: priority,
       taskID: taskID,
       receiver: selectedUser,
+      sender: username,
+      description: description
     };
 
     axios.post('https://4oomdu5wr0.execute-api.ap-southeast-1.amazonaws.com/default/WebHooks', requestPayload)
@@ -123,8 +161,8 @@ const Deliver: React.FC = () => {
       setError("Please select pickup station, slot, and dropoff station before proceeding.");
       return;
     }
-    if (currentStep === 2 && priority === "") {
-      setError("Please select priority before proceeding.");
+    if (currentStep === 2 && (priority === "" || description.trim() === "")) {
+      setError("Please describe the item and priority before proceeding.");
       return;
     }
     setError("");
@@ -168,7 +206,7 @@ const Deliver: React.FC = () => {
       description: "Select the nearest pickup and drop-off stations based on availability.",
       content: (
         <div className="w-full h-full flex flex-col items-center justify-top mx-8">
-          <div className="w-full flex flex-row justify-center items-center gap-8">
+          {/* <div className="w-full flex flex-row justify-center items-center gap-8">
             <div className="mb-2 text-xl font-semibold">Base Station Status</div>
             <button
               onClick={fetchStations}
@@ -176,34 +214,11 @@ const Deliver: React.FC = () => {
             >
               <FiRefreshCw className="text-xl" />
             </button>
-          </div>
+          </div> */}
           {baseStations === null ? (
             <p className="text-lg font-medium">Loading base station availability...</p>
           ) : (
             <div className="w-full flex flex-col items-center my-12">
-
-              <div className="grid grid-cols-3 gap-8 max-w-4xl">
-                {baseStations.map((station) => (
-                  <div key={station.station} className="border border-gray-300 rounded-lg p-4 w-full shadow-lg bg-white">
-                    {/* Station Title */}
-                    <h3 className="text-lg font-bold text-center mb-4">{station.station}</h3>
-
-                    <div>
-                      {station.slots.map((slot, index) => (
-                        <div
-                          key={slot.slot}
-                          className={`flex items-center justify-center text-white font-bold rounded-md mb-2
-                          ${slot.status ? "bg-green-500" : "bg-red-500"}
-                          ${index === 2 ? "h-20" : "h-12"} w-10`}
-                        >
-                          {slot.slot}
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                ))}
-              </div>
-
 
               <div className="mt-6 w-full max-w-lg flex justify-between gap-4">
                 <div className="flex-1">
@@ -252,37 +267,37 @@ const Deliver: React.FC = () => {
                 </div>
               </div>
 
-              {pickupStation && dropoffStation && (
-                <div className="mt-6 w-full max-w-lg">
-                  <label className="block font-medium text-lg">Available Slots</label>
-                  <select
-                    className="border border-gray-300 rounded p-2 mt-2 w-full"
-                    value={slot || ""}
-                    onChange={(e) => setSlot(Number(e.target.value))}
-                  >
-                    <option value="" disabled>Select Slot</option>
-                    {(() => {
-                      const startSlots = baseStations.find((s) => s.station === pickupStation)?.slots.filter((s) => s.status) || [];
-                      const endSlots = baseStations.find((s) => s.station === dropoffStation)?.slots.filter((s) => s.status) || [];
+              {pickupStation && dropoffStation && (() => {
+                // Find available slots for both stations
+                const startSlots = baseStations.find((s) => s.station === pickupStation)?.slots.filter((s) => s.status) || [];
+                const endSlots = baseStations.find((s) => s.station === dropoffStation)?.slots.filter((s) => s.status) || [];
 
-                      const commonSlots = startSlots.filter((s) =>
-                        endSlots.some((es) => es.slot === s.slot)
-                      );
+                // Find common slots between the two stations
+                const commonSlots = startSlots.filter((s) => endSlots.some((es) => es.slot === s.slot));
 
-                      if (commonSlots.length === 0) {
-                        setError("No available slots between selected stations.");
-                        return null;
-                      }
+                // If no common slots exist, return error message
+                if (commonSlots.length === 0) {
+                  return <p className="text-red-500 text-sm mt-4">No available slots between the selected stations.</p>;
+                }
 
-                      return commonSlots.map((slot) => (
+                return (
+                  <div className="mt-6 w-full max-w-lg">
+                    <label className="block font-medium text-lg">Available Slots</label>
+                    <select
+                      className="border border-gray-300 rounded p-2 mt-2 w-full"
+                      value={slot || ""}
+                      onChange={(e) => setSlot(Number(e.target.value))}
+                    >
+                      <option value="" disabled>Select Slot</option>
+                      {commonSlots.map((slot) => (
                         <option key={slot.slot} value={slot.slot}>
                           Slot {slot.slot}
                         </option>
-                      ));
-                    })()}
-                  </select>
-                </div>
-              )}
+                      ))}
+                    </select>
+                  </div>
+                );
+              })()}
 
               <div className="h-6 text-center mt-8">
                 {error && <p className="text-red-500 text-sm">{error}</p>}
@@ -297,33 +312,32 @@ const Deliver: React.FC = () => {
       description: "GenAI will be used to determined the priority of your task",
       content: (
         <div className="flex flex-col w-full max-w-lg mx-auto">
-          {/* Message Input */}
           <div className="mt-6 w-full">
-            <label className="block font-medium text-lg">Enter Message</label>
+            <label className="block font-medium text-lg">Describe the item</label>
             <input
               type="text"
               className="border border-gray-300 rounded p-2 mt-2 w-full"
               placeholder="Describe the item of delivery..."
-              value={x}
-              onChange={(e) => setX(e.target.value)}
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
             />
           </div>
 
           <div className="mt-4 w-full">
-            <label className="block font-medium text-lg">Select Priority</label>
+            <label className="block font-medium text-lg">Category</label>
             <select
               className="border border-gray-300 rounded p-2 mt-2 w-full"
               value={priority}
               onChange={(e) => setPriority(Number(e.target.value))}
             >
-              <option value="" disabled>Select Priority</option>
-              <option value={1}>1 (Highest)</option>
-              <option value={2}>2</option>
-              <option value={3}>3 (Lowest)</option>
+              <option value="" disabled>Select Categories</option>
+              <option value={1}>Medicine</option>
+              <option value={1}>Blood Samples</option>
+              <option value={2}>Documents</option>
+              <option value={3}>Linen Supplies</option>
+              <option value={3}>Others</option>
             </select>
           </div>
-
-          {/* Error Message */}
           <div className="h-6 text-center mt-8">
             {error && <p className="text-red-500 text-sm">{error}</p>}
           </div>
@@ -345,8 +359,12 @@ const Deliver: React.FC = () => {
                   <td className="p-2 border-b">{taskID}</td>
                 </tr>
                 <tr>
-                  <td className="font-semibold p-2 border-b">Message:</td>
-                  <td className="p-2 border-b">AddTask</td>
+                  <td className="font-semibold p-2 border-b">Description:</td>
+                  <td className="p-2 border-b">{description}</td>
+                </tr>
+                <tr>
+                  <td className="font-semibold p-2 border-b">Sender:</td>
+                  <td className="p-2 border-b">{username || "Not selected"}</td>
                 </tr>
                 <tr>
                   <td className="font-semibold p-2 border-b">Receiver:</td>
@@ -368,10 +386,11 @@ const Deliver: React.FC = () => {
                   <td className="font-semibold p-2 border-b">Priority:</td>
                   <td className="p-2 border-b">{priority || "Not selected"}</td>
                 </tr>
+                
               </tbody>
             </table>
           </div>
-    
+
           {/* Submit Button */}
           <button
             onClick={sendRequest}
@@ -410,9 +429,6 @@ const Deliver: React.FC = () => {
   ];
 
   const progress = ((currentStep) / (screens.length - 1)) * 100;
-
-  if (isLoading) return <div className="text-center mt-8">Loading...</div>;
-
   if (!session) return <AccessDenied />;
 
   return (
@@ -435,6 +451,7 @@ const Deliver: React.FC = () => {
           )}
 
           <div className="mt-8 flex-grow text-center">
+            <div>{username}</div>
             <h1 className="text-2xl font-bold">{screens[currentStep].title}</h1>
             <p className="text-gray-600 mt-2">{screens[currentStep].description}</p>
           </div>
