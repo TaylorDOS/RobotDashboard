@@ -19,8 +19,8 @@ export const Navbar = () => {
   }, [pathname]);
 
   const navigation = [
-    { name: "Home", href: "/home" },
-    { name: "Notification", href: "/notification" },
+    { name: "Deliver", href: "/home" },
+    { name: "Overview", href: "/overview" },
     { name: "Simulator", href: "/simulator" },
     { name: "About", href: "/about" },
   ];
