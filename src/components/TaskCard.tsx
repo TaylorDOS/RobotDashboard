@@ -16,7 +16,7 @@ interface Task {
 const TaskCard: React.FC<{ task: Task }> = ({ task }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
 
-  const getPriorityColor = (priority: Number) => {
+  const getPriorityColor = (priority: number) => {
     switch (priority) {
       case 1:
         return "bg-red-100 text-red-600";
