@@ -144,7 +144,11 @@ const BaseStationPage: React.FC = () => {
               params: { message: "TopUnitAvailability" }
           });
         
-          const sortedTopUnits = response.data.sort((a, b) => a.slot - b.slot);
+          const sortedTopUnits: TopUnit[] = (response.data as TopUnit[]).map((unit) => ({
+            slot: unit.slot,
+            status: unit.status ?? false,
+          }));
+          sortedTopUnits.sort((a, b) => a.slot - b.slot);
           setTopUnits(sortedTopUnits);
       } catch (error) {
           console.error("Error fetching top unit availability:", error);
