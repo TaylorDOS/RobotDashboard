@@ -1,4 +1,6 @@
 import React, { useState } from "react";
+import { FiPackage } from "react-icons/fi";
+import { MdArrowForward } from "react-icons/md";
 
 interface Task {
   taskID: number;
@@ -12,6 +14,18 @@ interface Task {
   description: string;
   priority: number;
 }
+
+const progressSteps = [
+  "Pending",
+  "UserDropoff",
+  "MoveToStart",
+  "Loading",
+  "LoadingDone",
+  "MoveToEnd",
+  "Unloading",
+  "UnloadingDone",
+  "Completed",
+];
 
 const TaskCard: React.FC<{ task: Task }> = ({ task }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -33,50 +47,49 @@ const TaskCard: React.FC<{ task: Task }> = ({ task }) => {
     <>
       {/* Task Card */}
       <div
-        className="bg-white shadow-lg rounded-lg p-6 border border-gray-300 hover:shadow-xl transition-all relative cursor-pointer"
+        className={` rounded-lg p-6 border transition-all relative cursor-pointer hover:shadow-xl
+        ${{
+            Ongoing: "bg-blue-50 border-blue-300",
+            PendingCollection: "bg-orange-50 border-orange-300",
+            Completed: "bg-gray-50 border-gray-300",
+          }[task.status] || "bg-red-50 border-red-300"}`}
         onClick={() => setIsModalOpen(true)}
       >
-        {/* Task Description as Title */}
-        <h3 className="text-xl font-bold text-gray-800 mb-4">{task.description}</h3>
+        <h3 className="text-xl font-bold text-gray-800">{task.description}</h3>
+
+        <span className="text-sm font-semibold text-center">
+          {task.status}
+        </span>
 
         {/* Sender & Receiver Section */}
-        <div className="flex justify-between items-center">
-          {/* Sender */}
-          <div className="text-left">
-            <p className="text-sm font-semibold text-gray-700">Sender</p>
+        <div className="flex justify-between items-center mt-4">
+          {/* Sender Section */}
+          <div className="flex flex-col items-start">
+            <p className="text-sm text-gray-700">Sender</p>
             <p className="text-lg font-bold text-blue-600">{task.sender}</p>
-            <p className="text-sm text-gray-600">{task.start_station}</p>
+            <p className="text-sm font-semibold text-blue-500">Base Station {task.start_station}</p>
           </div>
 
-          {/* Arrow Indicator */}
-          <div className="text-gray-500 text-xl font-bold">→</div>
+          {/* Arrow Indicator with Icon */}
+          <div className="flex flex-col items-center text-gray-700">
+            <FiPackage className="text-xl mb-1" />
+            <MdArrowForward className="text-xl" />
+          </div>
 
-          {/* Receiver */}
-          <div className="text-right">
-            <p className="text-sm font-semibold text-gray-700">Receiver</p>
+          {/* Receiver Section */}
+          <div className="flex flex-col items-end">
+            <p className="text-sm text-gray-700">Receiver</p>
             <p className="text-lg font-bold text-red-600">{task.receiver}</p>
-            <p className="text-sm text-gray-600">{task.end_station}</p>
+            <p className="text-sm font-semibold text-red-500">Base Station {task.end_station}</p>
           </div>
         </div>
 
-        {/* Progress & Status with Pill Shape */}
-        <div className="mt-4 flex flex-col space-y-2 mb-4">
-          {/* Progress */}
-          <span className="w-full px-3 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-600 text-center">
-            {task.progress}
-          </span>
-
-          {/* Status */}
+        {/* Progress */}
+        <div className="w-full mt-2">
+          <p className="text-sm font-bold text-gray-700">Progress</p>
           <span
-            className={`w-full px-3 py-1 text-xs font-semibold rounded-full text-center ${
-              task.status === "Completed"
-                ? "bg-green-100 text-green-600"
-                : task.status === "In Progress"
-                ? "bg-yellow-100 text-yellow-600"
-                : "bg-red-100 text-red-600"
-            }`}
-          >
-            {task.status}
+            className="w-full text-sm font-semibold text-gray-600">
+            {task.progress}
           </span>
         </div>
 
@@ -89,7 +102,7 @@ const TaskCard: React.FC<{ task: Task }> = ({ task }) => {
       {/* Modal */}
       {isModalOpen && (
         <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
-          <div className="bg-white rounded-lg shadow-lg p-6 w-full max-w-md relative">
+          <div className="bg-white rounded-lg shadow-lg p-6 w-full max-w-xl relative mx-4">
             {/* Close Button */}
             <button
               onClick={() => setIsModalOpen(false)}
@@ -98,58 +111,61 @@ const TaskCard: React.FC<{ task: Task }> = ({ task }) => {
               ✖
             </button>
 
-            {/* Modal Content */}
-            <h2 className="text-2xl font-bold mb-4">{task.description}</h2>
+            <h2 className="text-2xl font-bold text-gray-900">{task.description}</h2>
+            <div className="text-gray-900 mb-4 text-xs">Task ID: {task.taskID}
 
-            <div className="text-sm text-gray-700 space-y-3">
-              <p>
-                <strong>Task ID:</strong> {task.taskID}
-              </p>
-              <p>
-                <strong>Sender:</strong> {task.sender} 
-              </p>
-              <p>
-                <strong>Receiver:</strong> {task.receiver}
-              </p>
-              <p>
-                <strong>Start:</strong> {task.start_station}
-              </p>
-              <p>
-                <strong>End:</strong> {task.end_station}
-              </p>
-              <p>
-                <strong>Slot: </strong> {task.slot}
+            </div>
+
+            {/* Task Details */}
+            <div className="grid grid-cols-2 gap-4 text-gray-700 text-sm">
+
+              <p><strong className="text-gray-900">Sender:</strong> {task.sender}</p>
+              <p><strong className="text-gray-900">Receiver:</strong> {task.receiver}</p>
+              <p><strong className="text-gray-900">Start:</strong> {task.start_station}</p>
+              <p><strong className="text-gray-900">End:</strong> {task.end_station}</p>
+              <p><strong className="text-gray-900">Slot:</strong> {task.slot}</p>
+              <p> <strong className="text-gray-900">Priority:</strong>
+                <span className={`ml-2 px-3 py-1 text-sm font-medium rounded-full ${getPriorityColor(task.priority)}`}>{task.priority}</span>
               </p>
 
-              <p>
-                <strong>Priority:</strong>{" "}
-                <span className={`px-2 py-1 rounded-full ${getPriorityColor(task.priority)}`}>
-                  {task.priority}
-                </span>
-              </p>
-
-
-              <p>
-                <strong>Progress:</strong>{" "}
-                <span className="px-2 py-1 rounded-full bg-blue-100 text-blue-600">
-                  {task.progress}
-                </span>
-              </p>
-
-              <p>
-                <strong>Status:</strong>{" "}
-                <span
-                  className={`px-2 py-1 rounded-full ${
-                    task.status === "Completed"
-                      ? "bg-green-100 text-green-600"
-                      : task.status === "In Progress"
-                      ? "bg-yellow-100 text-yellow-600"
-                      : "bg-red-100 text-red-600"
-                  }`}
-                >
+              <p className="col-span-2 flex items-center">
+                <strong className="text-gray-900">Status:</strong>
+                <span className={`ml-2 px-3 py-1 text-sm font-medium rounded-full ${task.status === "Completed" ? "bg-green-100 text-green-600" : task.status === "Ongoing" ? "bg-blue-100 text-blue-600" : "bg-red-100 text-red-600"}`}>
                   {task.status}
                 </span>
               </p>
+            </div>
+
+            {/* Progress Tracker */}
+            <div className="relative items-center mt-4">
+              <strong className="text-gray-900 text-sm">Progress:</strong>
+              <div className="flex flex-col items-center justify-center">
+                {progressSteps.map((step, index) => {
+                  const isCompleted = progressSteps.indexOf(task.progress) >= index;
+
+                  return (
+                    <div key={index} className="relative flex flex-col items-center w-full">
+
+                      {index !== 0 && (
+                        <div
+                          className="left-1/2 transform h-8 flex flex-col items-center w-full"
+                        >
+                          <div className={`my-1 w-[2px] h-full ${isCompleted ? "bg-blue-300" : "bg-gray-300"}`} />
+
+                        </div>
+                      )}
+
+                      <div
+                        className={`lg:w-1/2 w-full p-1 text-center rounded-full text-sm font-bold
+                          ${isCompleted ? "bg-blue-500 text-white" : "bg-gray-200 text-gray-600"}`}
+                      >
+                        {step}
+                      </div>
+
+                    </div>
+                  );
+                })}
+              </div>
             </div>
           </div>
         </div>
