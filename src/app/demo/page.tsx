@@ -38,6 +38,7 @@ interface Log {
   priority: number;
   timeslot: number;
   timestamp: number;
+  receiver: string;
 }
   
 const BaseStationPage: React.FC = () => {
@@ -78,7 +79,7 @@ const BaseStationPage: React.FC = () => {
   
         const formattedStations = Object.keys(stationMap).map(stationId => ({
           station: stationId,
-          slots: stationMap[stationId].sort((a, b) => a.slot - b.slot) // Sort slots by slot number
+          slots: stationMap[stationId].sort((a, b) => a.slot - b.slot) 
         }));
   
         setStations(formattedStations);
@@ -98,13 +99,13 @@ const BaseStationPage: React.FC = () => {
   
         const formattedLogs: Log[] = response.data.map((log: any) => ({
           taskID: log.taskID || "N/A",
+          receiver: log.receiver || "N/A",
           status: log.status || "N/A",
           progress: log.progress || "N/A",
           start_station: log.start_station || "N/A",
           end_station: log.end_station || "N/A",
           slot: log.slot || 0,
-          priority: log.priority ?? 0,
-          timeslot: log.timeslot || 0,
+          priority: log.priority || 0,
           timestamp: log.timestamp || Date.now(),
         }));
   
@@ -139,28 +140,23 @@ const BaseStationPage: React.FC = () => {
     const fetchTopUnitAvailability = async () => {
       setLoadingTopUnits(true);
       try {
-        const response = await axios.get(
-          "https://umsfyussf6.execute-api.ap-southeast-1.amazonaws.com/default/DynamoRetrieve",
-          { params: { message: "TopUnitAvailability" } }
-        );
-
-        const formattedTopUnits: TopUnit[] = response.data.map((unit: any) => ({
-          slot: unit.slot || 0,
-          ...unit
-        }));
-
-        setTopUnits(formattedTopUnits);
+          const response = await axios.get("https://umsfyussf6.execute-api.ap-southeast-1.amazonaws.com/default/DynamoRetrieve", {
+              params: { message: "TopUnitAvailability" }
+          });
+        
+          const sortedTopUnits = response.data.sort((a, b) => a.slot - b.slot);
+          setTopUnits(sortedTopUnits);
       } catch (error) {
-        console.error("Error fetching top unit availability:", error);
+          console.error("Error fetching top unit availability:", error);
       } finally {
-        setLoadingTopUnits(false);
+          setLoadingTopUnits(false);
       }
-    };
-
+  };
+    
   return (
     <div className="base-station-page" style={{ padding: '20px', textAlign: 'center' }}>
-      <h1 style={{ justifyContent: 'center', fontSize: '24px', fontWeight: 'bold', marginBottom: '20px', width: 'fit-content' }}>Task Management</h1>
-      
+      {/*<h1 style={{ justifyContent: 'center', fontSize: '24px', fontWeight: 'bold', marginBottom: '20px', width: 'fit-content' }}>Task Management</h1>*/}
+      <h1 style={{ fontSize: '24px', fontWeight: 'bold', marginBottom: '20px' }}>Task Management</h1>
       {/* Description Display */}
       <p style={{ fontSize: '16px', color: 'blue', marginBottom: '20px' }}>Selected task: {selectedDescription}</p>
       
@@ -169,9 +165,9 @@ const BaseStationPage: React.FC = () => {
                 {/* TopUnit */}
                 <div style={{ flex: '1 0 auto', padding: '20px', border: '1px solid #ccc', borderRadius: '5px', marginBottom: '20px', marginRight: '1%' }}>
                     <h2>TopUnit - Loading</h2>
-                    <p style={{ fontSize: '14px', marginBottom: '10px' }}>Load item onto Robot</p>
+                    <p style={{ fontSize: '14px', marginBottom: '10px' }}>Load item onto Robot from Base Station</p>
                     <div style={{ display: 'flex', flexDirection: 'column' }}>
-                        <button style={{ backgroundColor: '#4CAF50', color: 'white', border: 'none', padding: '10px 15px', borderRadius: '5px', marginBottom: '10px' }} onClick={() => sendRequest('https://4oomdu5wr0.execute-api.ap-southeast-1.amazonaws.com/default/WebHooks', { taskID: 1, message: 'LoadingDone' },"Loading task 1 initiated" )}>
+                        <button style={{ backgroundColor: '#4CAF50', color: 'white', border: 'none', padding: '10px 15px', borderRadius: '5px', marginBottom: '10px' }} onClick={() => sendRequest('https://4oomdu5wr0.execute-api.ap-southeast-1.amazonaws.com/default/WebHooks', { taskID: 520409635, message: 'LoadingDone' },"Loading task 1 initiated" )}>
                             Loading 1
                         </button>
                         <button style={{ backgroundColor: '#4CAF50', color: 'white', border: 'none', padding: '10px 15px', borderRadius: '5px', marginBottom: '10px' }} onClick={() => sendRequest('https://4oomdu5wr0.execute-api.ap-southeast-1.amazonaws.com/default/WebHooks', { taskID: 2, message: 'LoadingDone' },"Loading task 2 initiated")}>
@@ -182,15 +178,15 @@ const BaseStationPage: React.FC = () => {
                         </button>
                     </div>
                     <h2>TopUnit - Unloading</h2>
-                    <p style={{ fontSize: '14px', marginBottom: '10px' }}>Load item onto Robot</p>
+                    <p style={{ fontSize: '14px', marginBottom: '10px' }}>Load item off of Robot into Base Station</p>
                     <div style={{ display: 'flex', flexDirection: 'column' }}>
-                    <button style={{ backgroundColor: '#4CAF50', color: 'white', border: 'none', padding: '10px 15px', borderRadius: '5px', marginBottom: '10px' }} onClick={() => sendRequest('https://4oomdu5wr0.execute-api.ap-southeast-1.amazonaws.com/default/WebHooks', { taskID: 1, message: 'UnloadingDone' },"Loading task 1 initiated")}>
+                    <button style={{ backgroundColor: '#4CAF50', color: 'white', border: 'none', padding: '10px 15px', borderRadius: '5px', marginBottom: '10px' }} onClick={() => sendRequest('https://4oomdu5wr0.execute-api.ap-southeast-1.amazonaws.com/default/WebHooks', { taskID: 520409635, message: 'UnloadingDone' },"Unloading task 1 initiated")}>
                             Unloading 1
                         </button>
-                        <button style={{ backgroundColor: '#4CAF50', color: 'white', border: 'none', padding: '10px 15px', borderRadius: '5px', marginBottom: '10px' }} onClick={() => sendRequest('https://4oomdu5wr0.execute-api.ap-southeast-1.amazonaws.com/default/WebHooks', { taskID: 2, message: 'UnloadingDone' },"Loading task 2 initiated")}>
+                        <button style={{ backgroundColor: '#4CAF50', color: 'white', border: 'none', padding: '10px 15px', borderRadius: '5px', marginBottom: '10px' }} onClick={() => sendRequest('https://4oomdu5wr0.execute-api.ap-southeast-1.amazonaws.com/default/WebHooks', { taskID: 2, message: 'UnloadingDone' },"Unloading task 2 initiated")}>
                             Unloading 2
                         </button>
-                        <button style={{ backgroundColor: '#4CAF50', color: 'white', border: 'none', padding: '10px 15px', borderRadius: '5px', marginBottom: '10px' }} onClick={() => sendRequest('https://4oomdu5wr0.execute-api.ap-southeast-1.amazonaws.com/default/WebHooks', { taskID: 3, message: 'UnloadingDone' },"Loading task 3 initiated")}>
+                        <button style={{ backgroundColor: '#4CAF50', color: 'white', border: 'none', padding: '10px 15px', borderRadius: '5px', marginBottom: '10px' }} onClick={() => sendRequest('https://4oomdu5wr0.execute-api.ap-southeast-1.amazonaws.com/default/WebHooks', { taskID: 3, message: 'UnloadingDone' },"Unloading task 3 initiated")}>
                             Unloading 3
                         </button>
                     </div>
@@ -199,22 +195,22 @@ const BaseStationPage: React.FC = () => {
                 {/* Base Unit */}
                 <div style={{ flex: '1 0 auto', padding: '20px', border: '1px solid #ccc', borderRadius: '5px', marginBottom: '20px', marginRight: '1%' }}>
                     <h2>Base Unit - User Dropoff</h2>
-                    <p style={{ fontSize: '14px', marginBottom: '10px' }}>Load item onto Robot</p>
+                    <p style={{ fontSize: '14px', marginBottom: '10px' }}>User has dropped off item</p>
                     <div style={{ display: 'flex', flexDirection: 'column' }}>
-                    <button style={{ backgroundColor: '#4CAF50', color: 'white', border: 'none', padding: '10px 15px', borderRadius: '5px', marginBottom: '10px' }} onClick={() => sendRequest('https://4oomdu5wr0.execute-api.ap-southeast-1.amazonaws.com/default/WebHooks', { taskID: 1, message: 'UserDropoff' },"Loading task 1 initiated")}>
+                    <button style={{ backgroundColor: '#4CAF50', color: 'white', border: 'none', padding: '10px 15px', borderRadius: '5px', marginBottom: '10px' }} onClick={() => sendRequest('https://4oomdu5wr0.execute-api.ap-southeast-1.amazonaws.com/default/WebHooks', { taskID: 520409635, message: 'UserDropoff' },"User Dropped off item")}>
                             UserDropoff 1
                         </button>
-                        <button style={{ backgroundColor: '#4CAF50', color: 'white', border: 'none', padding: '10px 15px', borderRadius: '5px', marginBottom: '10px' }} onClick={() => sendRequest('https://4oomdu5wr0.execute-api.ap-southeast-1.amazonaws.com/default/WebHooks', { taskID: 2, message: 'UserDropoff' },"Loading task 1 initiated")}>
+                        <button style={{ backgroundColor: '#4CAF50', color: 'white', border: 'none', padding: '10px 15px', borderRadius: '5px', marginBottom: '10px' }} onClick={() => sendRequest('https://4oomdu5wr0.execute-api.ap-southeast-1.amazonaws.com/default/WebHooks', { taskID: 2, message: 'UserDropoff' },"User Dropped off item")}>
                             UserDropoff 2
                         </button>
-                        <button style={{ backgroundColor: '#4CAF50', color: 'white', border: 'none', padding: '10px 15px', borderRadius: '5px', marginBottom: '10px' }} onClick={() => sendRequest('https://4oomdu5wr0.execute-api.ap-southeast-1.amazonaws.com/default/WebHooks', { taskID: 3, message: 'UserDropoff' },"Loading task 1 initiated")}>
+                        <button style={{ backgroundColor: '#4CAF50', color: 'white', border: 'none', padding: '10px 15px', borderRadius: '5px', marginBottom: '10px' }} onClick={() => sendRequest('https://4oomdu5wr0.execute-api.ap-southeast-1.amazonaws.com/default/WebHooks', { taskID: 3, message: 'UserDropoff' },"User Dropped off item")}>
                             UserDropoff 3
                         </button>
                     </div>
                     <h2>Base Unit - User Pickup</h2>
-                    <p style={{ fontSize: '14px', marginBottom: '10px' }}>Load item onto Robot</p>
+                    <p style={{ fontSize: '14px', marginBottom: '10px' }}>User has picked up item</p>
                     <div style={{ display: 'flex', flexDirection: 'column' }}>
-                        <button style={{ backgroundColor: '#4CAF50', color: 'white', border: 'none', padding: '10px 15px', borderRadius: '5px', marginBottom: '10px' }} onClick={() => sendRequest('https://4oomdu5wr0.execute-api.ap-southeast-1.amazonaws.com/default/WebHooks', { taskID: 1, message: 'UserCollected' },"Loading task 1 initiated")}>
+                        <button style={{ backgroundColor: '#4CAF50', color: 'white', border: 'none', padding: '10px 15px', borderRadius: '5px', marginBottom: '10px' }} onClick={() => sendRequest('https://4oomdu5wr0.execute-api.ap-southeast-1.amazonaws.com/default/WebHooks', { taskID: 520409635, message: 'UserCollected' },"User collected item")}>
                             UserPickup 1
                         </button>
                         <button style={{ backgroundColor: '#4CAF50', color: 'white', border: 'none', padding: '10px 15px', borderRadius: '5px', marginBottom: '10px' }} onClick={() => sendRequest('https://4oomdu5wr0.execute-api.ap-southeast-1.amazonaws.com/default/WebHooks', { taskID: 2, message: 'UserCollected' },"Loading task 1 initiated")}>
@@ -232,9 +228,9 @@ const BaseStationPage: React.FC = () => {
                 {/* MiR - LoadingDocked */}
                 <div style={{ flex: '1 0 auto', padding: '20px', border: '1px solid #ccc', borderRadius: '5px', marginBottom: '20px', marginRight: '1%' }}>
                     <h2>MiR - LoadingDocked</h2>
-                    <p style={{ fontSize: '14px', marginBottom: '10px' }}>Load item onto Robot</p>
+                    <p style={{ fontSize: '14px', marginBottom: '10px' }}>MiR has docked at Base Station for Pickup</p>
                     <div style={{ display: 'flex', flexDirection: 'column' }}>
-                        <button style={{ backgroundColor: '#4CAF50', color: 'white', border: 'none', padding: '10px 15px', borderRadius: '5px', marginBottom: '10px' }} onClick={() => sendRequest('https://4oomdu5wr0.execute-api.ap-southeast-1.amazonaws.com/default/WebHooks', { taskID: 1, message: 'LoadingDocked' },"Loading task 1 initiated")}>
+                        <button style={{ backgroundColor: '#4CAF50', color: 'white', border: 'none', padding: '10px 15px', borderRadius: '5px', marginBottom: '10px' }} onClick={() => sendRequest('https://4oomdu5wr0.execute-api.ap-southeast-1.amazonaws.com/default/WebHooks', { taskID: 520409635, message: 'LoadingDocked' },"Loading: Docked at Base Station")}>
                             LoadingDocked 1
                         </button>
                         <button style={{ backgroundColor: '#4CAF50', color: 'white', border: 'none', padding: '10px 15px', borderRadius: '5px', marginBottom: '10px' }} onClick={() => sendRequest('https://4oomdu5wr0.execute-api.ap-southeast-1.amazonaws.com/default/WebHooks', { taskID: 2, message: 'LoadingDocked' },"Loading task 1 initiated")}>
@@ -244,10 +240,10 @@ const BaseStationPage: React.FC = () => {
                             LoadingDocked 3
                         </button>
                     </div>
-                    <h2>MiR - LoadingDocked</h2>
-                    <p style={{ fontSize: '14px', marginBottom: '10px' }}>Load item onto Robot</p>
+                    <h2>MiR - UnloadingDocked</h2>
+                    <p style={{ fontSize: '14px', marginBottom: '10px' }}>MiR has docked at Base Station for Delivery</p>
                     <div style={{ display: 'flex', flexDirection: 'column' }}>
-                        <button style={{ backgroundColor: '#4CAF50', color: 'white', border: 'none', padding: '10px 15px', borderRadius: '5px', marginBottom: '10px' }} onClick={() => sendRequest('https://4oomdu5wr0.execute-api.ap-southeast-1.amazonaws.com/default/WebHooks', { taskID: 1, message: 'UnloadingDocked' },"Loading task 1 initiated")}>
+                        <button style={{ backgroundColor: '#4CAF50', color: 'white', border: 'none', padding: '10px 15px', borderRadius: '5px', marginBottom: '10px' }} onClick={() => sendRequest('https://4oomdu5wr0.execute-api.ap-southeast-1.amazonaws.com/default/WebHooks', { taskID: 520409635, message: 'UnloadingDocked' },"Unloading: Docked at Base Station")}>
                             UnloadingDocked 1
                         </button>
                         <button style={{ backgroundColor: '#4CAF50', color: 'white', border: 'none', padding: '10px 15px', borderRadius: '5px', marginBottom: '10px' }} onClick={() => sendRequest('https://4oomdu5wr0.execute-api.ap-southeast-1.amazonaws.com/default/WebHooks', { taskID: 2, message: 'UnloadingDocked' },"Loading task 1 initiated")}>
@@ -262,7 +258,7 @@ const BaseStationPage: React.FC = () => {
                 {/* Robot Dashboard */}
                 <div style={{ flex: '1 0 auto', padding: '20px', border: '1px solid #ccc', borderRadius: '5px', marginBottom: '20px', marginRight: '1%' }}>
                     <h2>Robot Dashboard</h2>
-                    <p style={{ fontSize: '14px', marginBottom: '10px' }}>Load item onto Robot</p>
+                    <p style={{ fontSize: '14px', marginBottom: '10px' }}>Sample tasks</p>
                     <div style={{ display: 'flex', flexDirection: 'column' }}>
                         <button style={{ backgroundColor: '#4CAF50', color: 'white', border: 'none', padding: '10px 15px', borderRadius: '5px', marginBottom: '10px' }} onClick={() => sendRequest('https://4oomdu5wr0.execute-api.ap-southeast-1.amazonaws.com/default/WebHooks', { taskID: 1, message: 'AddTask', start: "A", end: "B", slot: 2, timeslot: 10, priority: 1},"Loading task 1 initiated")}>
                             AddTask 1
@@ -279,114 +275,144 @@ const BaseStationPage: React.FC = () => {
             </div>
             
 
+         
+    <div>
+        <p style={{ fontSize: '16px', color: 'blue', marginBottom: '20px' }}>Selected task: {selectedDescription}</p>
         
-      {/* Base Station Availability Section */}
-      <div style={{ display: 'flex', justifyContent: 'flex-start', alignItems: 'flex-start' }}>
-                {/* Base Station Availability Section */}
-                <div style={{ width: '30%', marginRight: '1%', padding: '10px', border: '1px solid #ccc', borderRadius: '5px', justifyContent: 'center'}}>
-                    <h1 style={{ fontSize: '24px', fontWeight: 'bold', marginBottom: '20px' }}>Base Station Availability</h1>
-                    <button onClick={fetchBaseStationAvailability} style={{ padding: '10px 20px', backgroundColor: 'gray', color: 'white', borderRadius: '5px', marginBottom: '20px' }}>
-                      Refresh
-                    </button>
-                    {loading ? (
-                      <p>Loading...</p>
-                    ) : (
-                      <div style={{ display: 'flex', justifyContent: 'flex-start', flexWrap: 'nowrap', overflowX: 'auto' }}>
-                        {stations.map((station) => (
-                          <div key={station.station} style={{ margin: '10px', padding: '20px', border: '1px solid #ccc', borderRadius: '5px', boxShadow: '0 2px 6px rgba(0,0,0,0.1)', width: '80px', backgroundColor: '#f5f5f5' }}>
-                            <h2 style={{ fontWeight: '600' }}>{station.station}</h2>
-                            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '10px' }}>
-                              {station.slots.map(slot => (
-                                <div key={slot.slot} style={{ width: '50px', height: '50px', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: slot.available ? '#4CAF50' : '#F44336', color: 'white', fontWeight: 'bold', borderRadius: '5px' }}>
-                                  {slot.slot}
+        {/* Middle Section with Base Station and Top Unit Availability */}
+        <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '20px' }}>
+            {/* Base Station Availability */}
+            <div style={{ marginRight: '20px', padding: '10px', border: '1px solid #ccc', borderRadius: '5px', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+            <h1 style={{ fontSize: '24px', fontWeight: 'bold', marginBottom: '20px' }}>Base Unit Availability</h1>
+                <button onClick={fetchBaseStationAvailability} style={{ padding: '10px 20px', backgroundColor: 'gray', color: 'white', borderRadius: '5px', marginBottom: '20px' }}>Refresh</button>
+                {loading ? <p>Loading...</p> : (
+                    <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+                        {stations.map(station => (
+                            <div key={station.station} style={{ margin: '5px', padding: '20px', border: '1px solid #ccc', borderRadius: '5px', backgroundColor: '#f5f5f5' }}>
+                                <h3 style={{ fontWeight: '600' }}>{station.station}</h3>
+                                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '10px' }}>
+                                    {station.slots.map(slot => (
+                                        <div key={slot.slot} style={{
+                                            width: '50px',
+                                            height: slot.slot === 3 || slot.slot === 6 ? '100px' : '50px',
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            justifyContent: 'center',
+                                            backgroundColor: slot.available ? '#4CAF50' : '#F44336',
+                                            color: 'white',
+                                            fontWeight: 'bold',
+                                            borderRadius: '5px'
+                                        }}>
+                                            {slot.slot}
+                                        </div>
+                                    ))}
                                 </div>
-                              ))}
                             </div>
-                          </div>
                         ))}
-                      </div>
-                    )}
-                </div>
-
-                {/* Command Log */}
-                <div style={{ flexGrow: 1, padding: '10px', border: '1px solid #ccc', borderRadius: '5px' }}>
-                <h1 style={{ fontSize: '24px', fontWeight: 'bold', marginBottom: '20px' }}>Commands Log</h1>
-                <button onClick={fetchLogs} style={{ padding: '10px 20px', backgroundColor: 'gray', color: 'white', borderRadius: '5px', marginBottom: '20px' }}>
-                      Refresh
-                    </button>
-                <TableContainer component={Paper}>
-                  <Table>
-                    <TableHead>
-                      <TableRow>
-                      <TableCell>TaskID</TableCell>
-                      <TableCell>Status</TableCell>
-                      <TableCell>Progress</TableCell>
-                      <TableCell>Start</TableCell>
-                      <TableCell>End</TableCell>
-                      <TableCell>Slot</TableCell>
-                      <TableCell>Timeslot</TableCell>
-                      <TableCell>Priority</TableCell>
-                      </TableRow>
-                    </TableHead>
-                    <TableBody>
-                      {logs.map((log) => (
-                        <TableRow key={log.taskID}>
-                        <TableCell>{log.taskID}</TableCell>
-                        <TableCell>{log.status}</TableCell>
-                        <TableCell>{log.progress}</TableCell>
-                        <TableCell>{log.start_station}</TableCell>
-                        <TableCell>{log.end_station}</TableCell>
-                        <TableCell>{log.slot}</TableCell>
-                        <TableCell>{log.priority}</TableCell>
-                        <TableCell>{log.timeslot}</TableCell>
-                        <TableCell>{new Date(log.timestamp).toLocaleString()}</TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </TableContainer>
-              </div>
+                    </div>
+                )}
             </div>
 
-            <div style={{ flex: '0 1 auto', marginRight: '20px' }}>
-                    <h1 style={{ fontSize: '24px', fontWeight: 'bold', marginBottom: '20px' }}>Top Unit Availability</h1>
-                    <button onClick={fetchTopUnitAvailability} style={{ padding: '10px 20px', backgroundColor: 'gray', color: 'white', borderRadius: '5px', marginBottom: '20px' }}>
-                      Refresh
-                    </button>
+            {/* Top Unit Availability */}
+            <div style={{ padding: '10px', border: '1px solid #ccc', borderRadius: '5px', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+            <h1 style={{ fontSize: '24px', fontWeight: 'bold', marginBottom: '20px' }}>Top Unit Availability</h1>
+                <button onClick={fetchTopUnitAvailability} style={{ padding: '10px 20px', backgroundColor: 'gray', color: 'white', borderRadius: '5px', marginBottom: '20px' }}>Refresh</button>
+                {loadingTopUnits ? <p>Loading...</p> : (
+                    <div style={{ display: 'flex', justifyContent: 'center' }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', margin: '5px' }}>
+                        {/* First column for slots 1, 2, 3 */}
+                        {topUnits.filter(unit => unit.slot <= 3).map(unit => (
+                            <div key={unit.slot} style={{
+                                width: '50px',
+                                height: unit.slot === 3 ? '100px' : '50px',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                backgroundColor: unit.status ? '#4CAF50' : '#F44336',
+                                color: 'white',
+                                fontWeight: 'bold',
+                                borderRadius: '5px',
+                                margin: '2px'
+                            }}>
+                                {unit.slot}
+                            </div>
+                        ))}
+                    </div>
+                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', margin: '5px' }}>
+                        {/* Second column for slots 4, 5, 6 */}
+                        {topUnits.filter(unit => unit.slot > 3).map(unit => (
+                            <div key={unit.slot} style={{
+                                width: '50px',
+                                height: unit.slot === 6 ? '100px' : '50px',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                backgroundColor: unit.status ? '#4CAF50' : '#F44336',
+                                color: 'white',
+                                fontWeight: 'bold',
+                                borderRadius: '5px',
+                                margin: '2px'
+                            }}>
+                                {unit.slot}
+                            </div>
+                        ))}
+                    </div>
+                </div>
+                )}
+            </div>
+        </div>
 
-                    {loadingTopUnits ? (
-        <div>Loading...</div>
-      ) : topUnits.length > 0 ? (
-        <TableContainer component={Paper}>
-          <Table>
-            <TableHead>
-              <TableRow>
-                <TableCell>Slot</TableCell>
-                {[...Array(24)].map((_, index) => (
-                  <TableCell key={`slot-${index + 1}`}>{index + 1}</TableCell>
-                ))}
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {topUnits.map((unit) => (
-                <TableRow key={unit.slot}>
-                  <TableCell>{unit.slot}</TableCell>
-                  {[...Array(24)].map((_, index) => (
-                    <TableCell key={`status-${unit.station}-${index + 1}`}>
-                      {unit[index + 1] ? "Available" : "Unavailable"}
-                    </TableCell>
-                  ))}
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </TableContainer>
-      ) : (
-        <div>No top unit availability data to display</div>
-      )}
-    </div>  
+        {/* Bottom Section with Commands Log */}
+        <div style={{ width: '100%', textAlign: 'center', marginTop: '20px', padding: '10px', border: '1px solid #ccc', borderRadius: '5px' }}>
+        <h1 style={{ fontSize: '24px', fontWeight: 'bold', marginBottom: '20px' }}>Commands Log</h1>
+            <button onClick={fetchLogs} style={{ padding: '10px 20px', backgroundColor: 'gray', color: 'white', borderRadius: '5px', marginBottom: '20px' }}>Refresh</button>
+            <TableContainer component={Paper}>
+                <Table>
+                    <TableHead>
+                        <TableRow>
+                          <TableCell>TaskID</TableCell>
+                          <TableCell>Receiver</TableCell>
+                          <TableCell>Status</TableCell>
+                          <TableCell>Progress</TableCell>
+                          <TableCell>Start</TableCell>
+                          <TableCell>End</TableCell>
+                          <TableCell>Slot</TableCell>
+                          <TableCell>Priority</TableCell>
+                          <TableCell>
+                          <TableSortLabel
+                        active={orderBy === 'timestamp'}
+                        direction={orderBy === 'timestamp' ? order : 'asc'}
+                        onClick={() => handleRequestSort('timestamp')}
+                      >
+                        Timestamp
+                      </TableSortLabel>
+                          </TableCell>
+                      
+                        </TableRow>
+                    </TableHead>
+                    <TableBody>
+                        {logs.map(log => (
+                            <TableRow key={log.taskID}>
+                                <TableCell>{log.taskID}</TableCell>
+                                <TableCell>{log.receiver}</TableCell>
+                                <TableCell>{log.status}</TableCell>
+                                <TableCell>{log.progress}</TableCell>
+                                <TableCell>{log.start_station}</TableCell>
+                                <TableCell>{log.end_station}</TableCell>
+                                <TableCell>{log.slot}</TableCell>
+                                <TableCell>{log.priority}</TableCell>
+                              
+                                <TableCell>{new Date(log.timestamp).toLocaleString()}</TableCell>
+                            </TableRow>
+                        ))}
+                    </TableBody>
+                </Table>
+            </TableContainer>
+        </div>
+    </div>
+
       </div>
-    );
+  );
 };
 
 
