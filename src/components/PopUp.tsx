@@ -22,7 +22,7 @@ const PopUp: React.FC<{ username: string }> = ({ username }) => {
 
         const tasks: Task[] = await response.json();
 
-        const pendingTasks = tasks.filter((task) => task.status === "WaitingCollection");
+        const pendingTasks = tasks.filter((task) => task.status === "PendingCollection");
 
         if (pendingTasks.length > 0) {
           setNewTasks(pendingTasks);

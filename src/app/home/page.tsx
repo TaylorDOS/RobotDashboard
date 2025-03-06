@@ -5,6 +5,8 @@ import axios from "axios";
 import { getBaseStationAvailability, BaseStation } from "@/utils/getBaseStationAvailability";
 import AccessDenied from "@/components/AccessDenied";
 import { FiArrowLeft, FiArrowRight } from "react-icons/fi";
+import Link from "next/link";
+
 
 interface CognitoUser {
   username: string;
@@ -121,7 +123,11 @@ const Deliver: React.FC = () => {
     if (currentStep === 0) {
       setShowNextButton(true);
       setShowBackButton(false);
-    } else if (currentStep === 3) {
+    } else if (currentStep === 4) {
+      setShowNextButton(false);
+      setShowBackButton(false);
+    }
+    else if (currentStep === 3) {
       setShowNextButton(false);
       setShowBackButton(true);
     } else {
@@ -332,10 +338,10 @@ const Deliver: React.FC = () => {
             >
               <option value="" disabled>Select Categories</option>
               <option value={1}>Medicine</option>
-              <option value={1}>Blood Samples</option>
-              <option value={2}>Documents</option>
-              <option value={3}>Linen Supplies</option>
-              <option value={3}>Others</option>
+              <option value={2}>Blood Samples</option>
+              <option value={3}>Documents</option>
+              <option value={4}>Linen Supplies</option>
+              <option value={5}>Others</option>
             </select>
           </div>
           <div className="h-6 text-center mt-8">
@@ -386,7 +392,7 @@ const Deliver: React.FC = () => {
                   <td className="font-semibold p-2 border-b">Priority:</td>
                   <td className="p-2 border-b">{priority || "Not selected"}</td>
                 </tr>
-                
+
               </tbody>
             </table>
           </div>
@@ -401,27 +407,19 @@ const Deliver: React.FC = () => {
         </div>
       ),
     },
-    // {
-    //   title: "Working hard",
-    //   description: "Please wait while we calculate the best route for you.",
-    //   content: (
-    //     <div className="flex flex-col items-center">
-    //       <p className="mt-4 text-gray-600">Calculating...</p>
-    //     </div>
-    //   ),
-    //   onLoad: () => {
-    //     console.log("Calculating route...");
-    //     setTimeout(() => {
-    //       setCurrentStep(4);
-    //     }, 3000);
-    //   },
-
-    // },
     {
       title: "Progress",
       description: "Check the status of your delivery.",
       content: (
         <div className="w-full mx-8">
+
+          <Link href="/overview">
+            <button className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded">
+              Proceed
+            </button>
+          </Link>
+
+
         </div>
 
       ),
