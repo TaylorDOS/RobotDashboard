@@ -3,7 +3,7 @@ import Image from "next/image";
 import React from "react";
 
 export function Footer() {
-  const navigation = ["Deliver", "Overview"];
+  const navigation = ["Home", "Deliver", "Overview"];
   return (
     <div className="relative mx-auto max-w-screen-lg">
         <div className="lg:mx-0 mx-8 grid lg:grid-cols-3  pt-8 mt-5 border-t border-gray-200 dark:border-trueGray-700">
