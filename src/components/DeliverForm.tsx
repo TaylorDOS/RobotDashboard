@@ -3,6 +3,7 @@ import { useSession } from "next-auth/react";
 import { useEffect, useState } from "react";
 import axios from "axios";
 import { getBaseStationAvailability, BaseStation } from "@/utils/getBaseStationAvailability";
+import { classifyDescription } from "@/lib/api";
 
 interface CognitoUser {
   username: string;
@@ -25,16 +26,30 @@ export function DeliverForm() {
   const [pickupStation, setPickupStation] = useState<string>("");
   const [slot, setSlot] = useState<number | null>(null);
   const [dropoffStation, setDropoffStation] = useState<string>("");
-  const [priority, setPriority] = useState<number | "">("");
+  
+  // Item details and classification states
   const [description, setDescription] = useState<string>("");
+  const [category, setCategory] = useState<string>("");
+  const [priority, setPriority] = useState<number | "">("");
+  const [isClassifying, setIsClassifying] = useState<boolean>(false);
+  const [classificationError, setClassificationError] = useState<boolean>(false);
+  const [manualSelection, setManualSelection] = useState<boolean>(false);
+  
   const [error, setError] = useState<{[key: string]: string}>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
 
+  // Map categories to their respective priorities
+  const categoryPriorityMap: {[key: string]: number} = {
+    "Medicine": 1,
+    "Blood Samples": 2,
+    "Documents": 3,
+    "Linen Supplies": 4,
+    "Others": 5
+  };
   
   const fetchUsers = async () => {
     try {
-      
       console.log("Fetching all users from /api/getUsers...");
       const response = await fetch("/api/getUsers", {
         method: "GET",
@@ -85,6 +100,117 @@ export function DeliverForm() {
     }
   };
   
+  // Function to classify the description and set priority/category
+  const handleClassification = async () => {
+    if (!description.trim()) {
+      setError(prev => ({...prev, description: "Please enter a description first"}));
+      return;
+    }
+    
+    setError(prev => ({...prev, description: ""}));
+    setIsClassifying(true);
+    setClassificationError(false);
+    
+    try {
+      console.log("Starting classification for:", description);
+      
+      // Set a timeout to switch to manual mode if classification takes too long
+      const timeoutId = setTimeout(() => {
+        if (isClassifying) {
+          console.log("Classification timeout - switching to manual selection");
+          setClassificationError(true);
+          setIsClassifying(false);
+        }
+      }, 8000); // 8-second timeout
+      
+      // Attempt to classify, but with error handling that doesn't break the UI
+      try {
+        // Call the classification API
+        const result = await classifyDescription(description);
+        
+        console.log("Classification successful:", result);
+        
+        // Handle API response format
+        if (!result.category) {
+          throw new Error("API response missing category information");
+        }
+        
+        setCategory(result.category);
+        // If API returns priority directly, use it; otherwise, map from category
+        if (result.priority !== undefined) {
+          setPriority(result.priority);
+        } else {
+          setPriority(categoryPriorityMap[result.category] || 5); // Default to "Others" (5) if not found
+        }
+        
+        setClassificationError(false);
+        setManualSelection(false);
+      } catch (apiError) {
+        console.error("API error details:", apiError);
+        setClassificationError(true);
+        
+        // If the API failed, second resort
+        // This is a fallback heuristic when the API is unavailable
+        if (description.toLowerCase().includes("medicine") || 
+            description.toLowerCase().includes("pill") || 
+            description.toLowerCase().includes("drug") || 
+            description.toLowerCase().includes("prescription")) {
+          console.log("Applying fallback heuristic: Medicine");
+          setCategory("Medicine");
+          setPriority(1);
+          setManualSelection(true); // Still enable manual mode, but with a pre-selection
+        } else if (description.toLowerCase().includes("blood") || 
+                 description.toLowerCase().includes("sample") || 
+                 description.toLowerCase().includes("specimen") || 
+                 description.toLowerCase().includes("lab")) {
+          console.log("Applying fallback heuristic: Blood Samples");
+          setCategory("Blood Samples");
+          setPriority(2);
+          setManualSelection(true);
+        } else if (description.toLowerCase().includes("document") || 
+                 description.toLowerCase().includes("paper") || 
+                 description.toLowerCase().includes("file") || 
+                 description.toLowerCase().includes("form")) {
+          console.log("Applying fallback heuristic: Documents");
+          setCategory("Documents");
+          setPriority(3);
+          setManualSelection(true);
+        } else if (description.toLowerCase().includes("linen") || 
+                 description.toLowerCase().includes("cloth") || 
+                 description.toLowerCase().includes("supply") || 
+                 description.toLowerCase().includes("fabric")) {
+          console.log("Applying fallback heuristic: Linen Supplies");
+          setCategory("Linen Supplies");
+          setPriority(4);
+          setManualSelection(true);
+        } else {
+          // When all else fails, default to "Others"
+          console.log("Applying fallback default: Others");
+          setCategory("Others");
+          setPriority(5);
+          setManualSelection(true);
+        }
+      }
+      
+      clearTimeout(timeoutId);
+    } catch (error) {
+      console.error("General error during classification process:", error);
+      setClassificationError(true);
+      setManualSelection(true); // Automatically switch to manual mode on critical errors
+    } finally {
+      setIsClassifying(false);
+    }
+  };
+  
+  // Reset classification when description changes
+  useEffect(() => {
+    if (!manualSelection && description.trim() !== "" && !isClassifying) {
+      // Reset category and priority when description changes and not in manual mode
+      setCategory("");
+      setPriority("");
+    }
+  }, [description]);
+  
   const validateForm = () => {
     let isValid = true;
     const newErrors: {[key: string]: string} = {};
@@ -99,8 +225,13 @@ export function DeliverForm() {
       isValid = false;
     }
     
-    if (priority === "" || description.trim() === "") {
-      newErrors.description = "Please complete item details";
+    if (description.trim() === "") {
+      newErrors.description = "Please enter a description";
+      isValid = false;
+    }
+    
+    if (priority === "") {
+      newErrors.description = (newErrors.description || "") + " Please classify or select a category";
       isValid = false;
     }
     
@@ -132,14 +263,17 @@ export function DeliverForm() {
     try {
       await axios.post('https://4oomdu5wr0.execute-api.ap-southeast-1.amazonaws.com/default/WebHooks', requestPayload);
       setIsSubmitted(true);
+
       setSelectedUser("");
       setPickupStation("");
       setDropoffStation("");
       setSlot(null);
       setPriority("");
+      setCategory("");
       setDescription("");
       setTaskID(generateTaskID());
       setIsSubmitted(false);
+      setManualSelection(false);
       
       setError({success: "Task created successfully!"});
       setTimeout(() => {
@@ -153,6 +287,7 @@ export function DeliverForm() {
       setIsSubmitting(false);
     }
   };
+  
   useEffect(() => {
     setTaskID(generateTaskID());
   }, []);
@@ -303,7 +438,7 @@ export function DeliverForm() {
           </div>
         </div>
         
-        {/* Section 3: Item Details */}
+        {/* Section 3: Item Details with Auto-Classification */}
         <div className="bg-gray-50 p-4 rounded-lg">
           <h3 className="text-md font-medium mb-3 text-blue-600">3. Item Details</h3>
           
@@ -312,32 +447,100 @@ export function DeliverForm() {
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 Description
               </label>
-              <input
-                type="text"
-                className="border border-gray-300 rounded p-2 w-full text-sm"
-                placeholder="Describe the item for delivery..."
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-              />
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  className="border border-gray-300 rounded p-2 flex-grow text-sm"
+                  placeholder="Describe the item for delivery..."
+                  value={description}
+                  onChange={(e) => setDescription(e.target.value)}
+                />
+                <button
+                  type="button"
+                  onClick={handleClassification}
+                  disabled={isClassifying || description.trim() === ""}
+                  className="bg-blue-500 hover:bg-blue-600 text-white py-2 px-3 rounded text-sm disabled:bg-blue-300"
+                >
+                  {isClassifying ? "Classifying..." : "Classify"}
+                </button>
+              </div>
             </div>
             
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Category
-              </label>
-              <select
-                className="border border-gray-300 rounded p-2 w-full text-sm"
-                value={priority}
-                onChange={(e) => setPriority(Number(e.target.value))}
-              >
-                <option value="" disabled>Select Category</option>
-                <option value={1}>Medicine</option>
-                <option value={2}>Blood Samples</option>
-                <option value={3}>Documents</option>
-                <option value={4}>Linen Supplies</option>
-                <option value={5}>Others</option>
-              </select>
-            </div>
+            {/* Classification Result or Manual Selection */}
+            {isClassifying ? (
+              <div className="flex items-center text-blue-600 text-sm">
+                <svg className="animate-spin h-4 w-4 mr-2" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none"></circle>
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                Classifying description...
+              </div>
+            ) : classificationError || manualSelection ? (
+              <>
+                {classificationError && !manualSelection && (
+                  <div className="bg-yellow-100 border border-yellow-400 text-yellow-800 px-3 py-2 rounded text-xs mb-2">
+                    <p>Classification service is unavailable. A best guess has been made based on your description.</p>
+                    <p className="mt-1 font-medium">You can adjust the category if needed.</p>
+                  </div>
+                )}
+                
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Category (Manual Selection)
+                  </label>
+                  <select
+                    className="border border-gray-300 rounded p-2 w-full text-sm"
+                    value={priority}
+                    onChange={(e) => {
+                      const priorityValue = Number(e.target.value);
+                      setPriority(priorityValue);
+                      // Find corresponding category
+                      const selectedCategory = Object.entries(categoryPriorityMap)
+                        .find(([_, value]) => value === priorityValue)?.[0] || "Others";
+                      setCategory(selectedCategory);
+                    }}
+                  >
+                    <option value="" disabled>Select Category</option>
+                    <option value={1}>Medicine</option>
+                    <option value={2}>Blood Samples</option>
+                    <option value={3}>Documents</option>
+                    <option value={4}>Linen Supplies</option>
+                    <option value={5}>Others</option>
+                  </select>
+                </div>
+              </>
+            ) : category ? (
+              <div className="bg-green-50 border border-green-200 rounded-md p-3">
+                <div className="flex justify-between">
+                  <div className="font-medium text-green-800 text-sm">Classification Result:</div>
+                  <button
+                    type="button"
+                    onClick={() => setManualSelection(true)}
+                    className="text-blue-600 hover:text-blue-800 text-xs"
+                  >
+                    Change Manually
+                  </button>
+                </div>
+                <div className="mt-1 text-sm">
+                  <div><span className="font-medium">Category:</span> {category}</div>
+                  <div><span className="font-medium">Priority:</span> {priority}</div>
+                </div>
+              </div>
+            ) : description.trim() !== "" ? (
+              <div className="flex items-center justify-between">
+                <div className="text-amber-600 text-sm">
+                  Please classify the description or select a category manually.
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setManualSelection(true)}
+                  className="text-blue-600 hover:text-blue-800 text-xs"
+                >
+                  Select Manually
+                </button>
+              </div>
+            ) : null}
+            
             {error.description && <p className="text-red-500 text-xs mt-1">{error.description}</p>}
           </div>
         </div>
@@ -366,8 +569,11 @@ export function DeliverForm() {
               <div className="font-medium">Slot:</div>
               <div>{slot !== null ? `Slot ${slot}` : "Not selected"}</div>
               
+              <div className="font-medium">Category:</div>
+              <div>{category || "Not classified"}</div>
+              
               <div className="font-medium">Priority:</div>
-              <div>{priority !== "" ? priority : "Not selected"}</div>
+              <div>{priority !== "" ? priority : "Not set"}</div>
               
               <div className="font-medium">Description:</div>
               <div>{description || "Not provided"}</div>
@@ -385,4 +591,4 @@ export function DeliverForm() {
       </form>
     </div>
   );
-	}
+}
