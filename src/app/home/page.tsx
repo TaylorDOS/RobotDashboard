@@ -162,17 +162,31 @@ const Home: React.FC = () => {
 
   const handlePriority = async () => {
     try {
-      await new Promise((resolve) => setTimeout(resolve, 2000));
-      setPriority(1);
-      // const response = await axios.post("/api/vertex-ai", {
-      //   description,
-      //   category: priority
-      // });
+      const response = await fetch("/api/priority", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ description }),
+      });
+    
+      if (!response.ok) {
+        throw new Error(`HTTP error! Status: ${response.status}`);
+      }
+    
+      const data = await response.json(); // Parse the JSON
+      console.log("Priority API result:", data);
+    
+      if (data.priority) {
+        setPriority(data.priority);
+      } else {
+        console.warn("No priority returned from API.");
+      }
+    
     } catch (error) {
-      console.error("Error calling Vertex AI:", error);
-      return;
+      console.error("Error fetching priority:", error);
     }
-  }
+  };
 
   useEffect(() => {
     if (currentStep === 0) {
