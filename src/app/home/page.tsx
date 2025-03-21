@@ -5,21 +5,24 @@ import axios from "axios";
 import { getBaseStationAvailability, BaseStation } from "@/utils/getBaseStationAvailability";
 import AccessDenied from "@/components/AccessDenied";
 import { FiArrowLeft, FiArrowRight } from "react-icons/fi";
+import { FaSpinner } from "react-icons/fa";
 import Link from "next/link";
-
+import Image from "next/image";
+import Select from "react-select";
 
 interface CognitoUser {
   username: string;
   email: string;
 }
 
-const Deliver: React.FC = () => {
+const Home: React.FC = () => {
   const { data: session } = useSession();
   const generateTaskID = () => {
     const timestamp = Date.now().toString().slice(-6);
     const randomPart = Math.floor(100 + Math.random() * 900).toString();
     return timestamp + randomPart;
   };
+  const [isLoading, setIsLoading] = useState(false);
   const [taskID, setTaskID] = useState<string | null>(null);
 
   const [users, setUsers] = useState<CognitoUser[]>([]);
@@ -40,6 +43,40 @@ const Deliver: React.FC = () => {
   const [currentStep, setCurrentStep] = useState(0);
   const [showNextButton, setShowNextButton] = useState(true);
   const [showBackButton, setShowBackButton] = useState(false);
+
+  const userOptions = users.map((user) => ({
+    value: user.username,
+    label: `${user.username} (${user.email})`,
+  }));
+
+  const stationOptions = baseStations.map((station) => ({
+    value: station.station,
+    label: station.station,
+  }));
+
+  const getSlotVisuals = () => {
+    const start = baseStations.find((s) => s.station === pickupStation);
+    const end = baseStations.find((s) => s.station === dropoffStation);
+
+    if (!start || !end) return [];
+
+    const startAvailable = start.slots.filter((s) => s.status);
+    const endAvailable = end.slots.filter((s) => s.status);
+    const common = startAvailable.filter((s) =>
+      endAvailable.some((e) => e.slot === s.slot)
+    );
+
+    const allSlots = Array.from({ length: 3 }, (_, i) => i + 1); // Assuming slots 1 to 5
+
+    return allSlots.map((slotNum) => {
+      const isAvailable = common.some((s) => s.slot === slotNum);
+      return {
+        value: slotNum,
+        label: `${slotNum}`,
+        available: isAvailable,
+      };
+    });
+  };
 
 
   const fetchUsers = async () => {
@@ -99,25 +136,43 @@ const Deliver: React.FC = () => {
   useEffect(() => {
     if (currentStep === 1) {
       fetchStations();
-    } else if (currentStep === 3) {
+    }
+    if (currentStep === 3) {
       setTaskID(generateTaskID());
     }
   }, [currentStep]);
 
   const fetchStations = async () => {
+    setIsLoading(true);
+    setError("");
     try {
-      setError("");
       const stations = await getBaseStationAvailability();
       setBaseStations(stations);
     } catch (err) {
       console.error("Error fetching base station data:", err);
       setError("Failed to load base station data.");
+    } finally {
+      setIsLoading(false);
     }
   };
 
-  const handleUserChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
-    setSelectedUser(event.target.value);
+  const handleUserChange = (selectedOption: any) => {
+    setSelectedUser(selectedOption?.value || "");
   };
+
+  const handlePriority = async () => {
+    try {
+      await new Promise((resolve) => setTimeout(resolve, 2000));
+      setPriority(1);
+      // const response = await axios.post("/api/vertex-ai", {
+      //   description,
+      //   category: priority
+      // });
+    } catch (error) {
+      console.error("Error calling Vertex AI:", error);
+      return;
+    }
+  }
 
   useEffect(() => {
     if (currentStep === 0) {
@@ -158,7 +213,7 @@ const Deliver: React.FC = () => {
     handleNext();
   };
 
-  const handleNext = () => {
+  const handleNext = async () => {
     if (currentStep === 0 && (!selectedUser)) {
       setError("Please select a recipient before proceeding.");
       return;
@@ -167,11 +222,16 @@ const Deliver: React.FC = () => {
       setError("Please select pickup station, slot, and dropoff station before proceeding.");
       return;
     }
-    if (currentStep === 2 && (priority === "" || description.trim() === "")) {
+    if (currentStep === 2 && (description.trim() === "")) {
       setError("Please describe the item and priority before proceeding.");
       return;
     }
     setError("");
+    if (currentStep === 2) {
+      setIsLoading(true);
+      await handlePriority();
+      setIsLoading(false);
+    }
     if (currentStep < screens.length - 1)
       setCurrentStep(currentStep + 1);
   };
@@ -182,24 +242,32 @@ const Deliver: React.FC = () => {
 
   const screens = [
     {
-      title: "Who are you delivering to?",
-      description: "Select a recipient for your delivery",
+      title: "Automated Delivery",
+      description: "Schedule a task for the delivery robot.",
       content: (
-        <div className="flex flex-col items-center justify-center w-full max-w-lg mx-auto h-full">
-          <select
-            className="border border-gray-300 rounded p-2 mt-2 w-full"
-            value={selectedUser}
-            onChange={handleUserChange}
-          >
-            <option value="" disabled>
-              Receiver
-            </option>
-            {users.map((user) => (
-              <option key={user.username} value={user.username}>
-                {user.username} ({user.email})
-              </option>
-            ))}
-          </select>
+        <div className="flex flex-col items-center justify-center w-full max-w-lg mx-auto h-full -mt-12">
+          <Image
+            src="/img/deliver/robot.png"
+            alt="Delivery Robot"
+            width={300}
+            height={300}
+          />
+          <div className="mt-8">
+            Choose the intended recipient for the delivery.
+          </div>
+          <div className="mt-4 w-full">
+            <label className="block font-medium text-lg mb-2">Select Receiver</label>
+            <Select
+              options={userOptions}
+              onChange={handleUserChange}
+              value={userOptions.find((opt) => opt.value === selectedUser)}
+              placeholder="Choose a user..."
+              className="text-left"
+              classNames={{
+                control: () => "p-1 shadow-md border border-gray-300",
+              }}
+            />
+          </div>
 
           <div className="h-6 text-center mt-8">
             {error && <p className="text-red-500 text-sm">{error}</p>}
@@ -208,99 +276,78 @@ const Deliver: React.FC = () => {
       ),
     },
     {
-      title: "Select Your Pickup & Drop-off Locations",
-      description: "Select the nearest pickup and drop-off stations based on availability.",
+      title: "Location",
+      description: "Set your pickup and drop-off points and select an available slot.",
       content: (
         <div className="w-full h-full flex flex-col items-center justify-top mx-8">
-          {/* <div className="w-full flex flex-row justify-center items-center gap-8">
-            <div className="mb-2 text-xl font-semibold">Base Station Status</div>
-            <button
-              onClick={fetchStations}
-              className="w-12 h-12 flex items-center justify-center bg-blue-400 text-white rounded-full hover:bg-blue-600 transition duration-300 shadow-md"
-            >
-              <FiRefreshCw className="text-xl" />
-            </button>
-          </div> */}
-          {baseStations === null ? (
-            <p className="text-lg font-medium">Loading base station availability...</p>
+          {isLoading ? (
+            <div className="flex items-center justify-center h-32">
+              <FaSpinner className="animate-spin text-blue-600 text-3xl" />
+            </div>
           ) : (
-            <div className="w-full flex flex-col items-center my-12">
-
+            <div className="w-full flex flex-col items-center">
               <div className="mt-6 w-full max-w-lg flex justify-between gap-4">
+                {/* Pickup Station */}
                 <div className="flex-1">
-                  <label className="block font-medium text-lg">Pickup Location</label>
-                  <select
-                    className="border border-gray-300 rounded p-2 mt-2 w-full"
-                    value={pickupStation}
-                    onChange={(e) => {
-                      setPickupStation(e.target.value);
+                  <label className="block font-medium text-lg mb-2">Pickup</label>
+                  <Select
+                    options={stationOptions}
+                    value={stationOptions.find((opt) => opt.value === pickupStation)}
+                    onChange={(selected) => {
+                      setPickupStation(selected?.value || "");
                       setDropoffStation("");
                       setSlot(null);
                       setError("");
                     }}
-                  >
-                    <option value="" disabled>Select Start Station</option>
-                    {baseStations.map((station) => (
-                      <option key={station.station} value={station.station}>
-                        {station.station}
-                      </option>
-                    ))}
-                  </select>
+                    placeholder="Select Start Station"
+                    classNames={{ control: () => "rounded-full" }}
+                  />
                 </div>
 
-
+                {/* Dropoff Station */}
                 <div className="flex-1">
-                  <label className="block font-medium text-lg">Dropoff Location</label>
-                  <select
-                    className="border border-gray-300 rounded p-2 mt-2 w-full"
-                    value={dropoffStation}
-                    onChange={(e) => {
-                      setDropoffStation(e.target.value);
+                  <label className="block font-medium text-lg mb-2">Dropoff</label>
+                  <Select
+                    options={stationOptions.filter((s) => s.value !== pickupStation)}
+                    value={stationOptions.find((opt) => opt.value === dropoffStation)}
+                    onChange={(selected) => {
+                      setDropoffStation(selected?.value || "");
                       setSlot(null);
                       setError("");
                     }}
-                    disabled={!pickupStation}
-                  >
-                    <option value="" disabled>Select End Station</option>
-                    {baseStations
-                      .filter((station) => station.station !== pickupStation)
-                      .map((station) => (
-                        <option key={station.station} value={station.station}>
-                          {station.station}
-                        </option>
-                      ))}
-                  </select>
+                    placeholder="Select End Station"
+                    isDisabled={!pickupStation}
+                    classNames={{ control: () => "rounded-full" }}
+                  />
                 </div>
               </div>
 
               {pickupStation && dropoffStation && (() => {
-                // Find available slots for both stations
-                const startSlots = baseStations.find((s) => s.station === pickupStation)?.slots.filter((s) => s.status) || [];
-                const endSlots = baseStations.find((s) => s.station === dropoffStation)?.slots.filter((s) => s.status) || [];
-
-                // Find common slots between the two stations
-                const commonSlots = startSlots.filter((s) => endSlots.some((es) => es.slot === s.slot));
-
-                // If no common slots exist, return error message
-                if (commonSlots.length === 0) {
-                  return <p className="text-red-500 text-sm mt-4">No available slots between the selected stations.</p>;
-                }
+                const slotOptions = getSlotVisuals();
 
                 return (
-                  <div className="mt-6 w-full max-w-lg">
-                    <label className="block font-medium text-lg">Available Slots</label>
-                    <select
-                      className="border border-gray-300 rounded p-2 mt-2 w-full"
-                      value={slot || ""}
-                      onChange={(e) => setSlot(Number(e.target.value))}
-                    >
-                      <option value="" disabled>Select Slot</option>
-                      {commonSlots.map((slot) => (
-                        <option key={slot.slot} value={slot.slot}>
-                          Slot {slot.slot}
-                        </option>
-                      ))}
-                    </select>
+                  <div className="mt-6 w-40">
+                    <label className="block font-medium text-lg mb-4">Available Slots</label>
+                    <div className="w-full rounded-xl border border-gray-300 bg-white shadow-sm p-4">
+                      <div className="grid grid-cols-1 gap-3">
+                        {slotOptions.map((option) => (
+                          <button
+                            key={option.value}
+                            onClick={() => option.available && setSlot(option.value)}
+                            disabled={!option.available}
+                            className={`py-2 px-4 rounded-md text-sm font-medium border transition duration-200
+                              ${option.available
+                                ? slot === option.value
+                                  ? "bg-green-600 text-white border-green-600 shadow-md"
+                                  : "bg-green-100 text-green-800 border-green-300 hover:bg-green-200"
+                                : "bg-red-100 text-red-400 border-red-200 cursor-not-allowed"
+                              }`}
+                          >
+                            {option.label}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
                   </div>
                 );
               })()}
@@ -314,49 +361,38 @@ const Deliver: React.FC = () => {
       ),
     },
     {
-      title: "Describe the item",
-      description: "GenAI will be used to determined the priority of your task",
+      title: "Details",
+      description: "Describe the item so we can assess its priority.",
       content: (
         <div className="flex flex-col w-full max-w-lg mx-auto">
-          <div className="mt-6 w-full">
-            <label className="block font-medium text-lg">Describe the item</label>
-            <input
-              type="text"
-              className="border border-gray-300 rounded p-2 mt-2 w-full"
-              placeholder="Describe the item of delivery..."
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-            />
-          </div>
-
-          <div className="mt-4 w-full">
-            <label className="block font-medium text-lg">Category</label>
-            <select
-              className="border border-gray-300 rounded p-2 mt-2 w-full"
-              value={priority}
-              onChange={(e) => setPriority(Number(e.target.value))}
-            >
-              <option value="" disabled>Select Categories</option>
-              <option value={1}>Medicine</option>
-              <option value={2}>Blood Samples</option>
-              <option value={3}>Documents</option>
-              <option value={4}>Linen Supplies</option>
-              <option value={5}>Others</option>
-            </select>
-          </div>
-          <div className="h-6 text-center mt-8">
-            {error && <p className="text-red-500 text-sm">{error}</p>}
-          </div>
+          {isLoading ? (
+            <div className="flex items-center justify-center h-32">
+              <FaSpinner className="animate-spin text-blue-600 text-3xl" />
+            </div>
+          ) : (
+            <>
+              <div className="mt-6 w-full">
+                <input
+                  type="text"
+                  className="border border-gray-300 rounded p-2 mt-2 w-full"
+                  placeholder="Describe the item of delivery..."
+                  value={description}
+                  onChange={(e) => setDescription(e.target.value)}
+                />
+              </div>
+              <div className="h-6 text-center mt-8">
+                {error && <p className="text-red-500 text-sm">{error}</p>}
+              </div>
+            </>
+          )}
         </div>
-
       ),
     },
     {
-      title: "Task Confirmation",
-      description: "Double-check the order details before proceeding.",
+      title: "Review",
+      description: "Double-check all task details before submitting.",
       content: (
         <div className="flex flex-col items-center justify-center w-full max-w-2xl mx-auto">
-          {/* Task Summary Table */}
           <div className="w-full border border-gray-300 rounded-lg shadow-md bg-white p-4 mt-4">
             <table className="w-full text-left border-collapse">
               <tbody>
@@ -389,15 +425,14 @@ const Deliver: React.FC = () => {
                   <td className="p-2 border-b">{slot || "Not selected"}</td>
                 </tr>
                 <tr>
-                  <td className="font-semibold p-2 border-b">Priority:</td>
-                  <td className="p-2 border-b">{priority || "Not selected"}</td>
+                  <td className="font-semibold p-2">Priority:</td>
+                  <td className="p-2">{priority || "Not selected"}</td>
                 </tr>
 
               </tbody>
             </table>
           </div>
 
-          {/* Submit Button */}
           <button
             onClick={sendRequest}
             className="px-6 py-2 bg-green-500 text-white rounded-lg mt-6 hover:bg-green-600 transition duration-300 shadow-md"
@@ -409,7 +444,7 @@ const Deliver: React.FC = () => {
     },
     {
       title: "Progress",
-      description: "Check the status of your delivery.",
+      description: "Task created, You can now track its delivery progress.",
       content: (
         <div className="w-full mx-8">
 
@@ -431,9 +466,9 @@ const Deliver: React.FC = () => {
 
   return (
     <div className="mx-auto flex flex-col min-h-screen">
-      <div className="relative w-full bg-gray-200 h-2">
+      <div className="relative w-full bg-gray-200 h-1">
         <div
-          className="bg-blue-500 h-2 rounded-full"
+          className="bg-blue-500 h-1 rounded-full"
           style={{ width: `${progress}%` }}
         />
       </div>
@@ -447,9 +482,7 @@ const Deliver: React.FC = () => {
               <FiArrowLeft className="text-2xl" />
             </button>
           )}
-
-          <div className="mt-8 flex-grow text-center">
-            <div>{username}</div>
+          <div className="flex-grow text-center">
             <h1 className="text-2xl font-bold">{screens[currentStep].title}</h1>
             <p className="text-gray-600 mt-2">{screens[currentStep].description}</p>
           </div>
@@ -474,4 +507,4 @@ const Deliver: React.FC = () => {
   );
 };
 
-export default Deliver;
+export default Home;

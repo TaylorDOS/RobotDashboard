@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useState, useEffect } from "react";
 
 interface Task {
   taskID: number;
@@ -10,80 +10,60 @@ interface Task {
   status: string;
 }
 
-const PopUp: React.FC<{ username: string }> = ({ username }) => {
-  const [newTasks, setNewTasks] = useState<Task[]>([]);
+const PopUp: React.FC<{ tasks: Task[]; isOpen: boolean; setIsOpen: (open: boolean) => void; onDismiss: (taskID: number) => void }> = ({ tasks, isOpen, setIsOpen, onDismiss }) => {
   const [showPopup, setShowPopup] = useState(false);
 
   useEffect(() => {
-    const fetchTasks = async () => {
-      try {
-        const response = await fetch(`/api/fetchCollection?userId=${username}`);
-        if (!response.ok) throw new Error("Failed to fetch tasks");
-
-        const tasks: Task[] = await response.json();
-
-        const pendingTasks = tasks.filter((task) => task.status === "PendingCollection");
-
-        if (pendingTasks.length > 0) {
-          setNewTasks(pendingTasks);
-          setShowPopup(true);
-        }
-      } catch (error) {
-        console.error("Error fetching tasks:", error);
-      }
-    };
-
-    const interval = setInterval(fetchTasks, 10000);
-
-    return () => clearInterval(interval);
-  }, [username]);
+    if (tasks.length > 0) {
+      setShowPopup(true);
+    }
+  }, [tasks]);
 
   return (
     <>
-      {showPopup && (
-        <div className="fixed bottom-6 right-6 bg-white shadow-xl rounded-lg border border-red-400 p-5 w-96 z-50 animate-slideIn">
-          {/* Header */}
-          <div className="flex items-center justify-between">
-            <h3 className="text-lg font-bold text-red-600">📢 Task Ready for Pickup!</h3>
+      {showPopup && tasks.length > 0 && (
+        <div className="fixed inset-0 bg-black/50 flex flex-col items-center justify-center z-50">
+          <div className="bg-white rounded-lg shadow-lg p-6 w-full max-w-md mx-4 md:max-w-lg relative">
             <button
               onClick={() => setShowPopup(false)}
-              className="text-gray-500 hover:text-gray-700 text-lg"
+              className="absolute top-4 right-4 text-gray-500 hover:text-gray-700 text-xl"
             >
               ✖
             </button>
+            <div className="flex items-center justify-between">
+              <h3 className="text-lg font-bold text-red-600">You have delivery!</h3>
+            </div>
+
+            <div className="mt-3">
+              <ul>
+                {tasks.map((task) => (
+                  <li key={task.taskID} className="bg-red-100 text-red-700 px-4 py-3 rounded-lg mb-2 shadow-sm">
+                    <p className="text-sm font-semibold">{task.description}</p>
+                    <p className="text-xs text-gray-600"><strong>Collect from:</strong> {task.end_station}</p>
+                    <p className="text-xs text-gray-600"><strong>Sender:</strong> {task.sender}</p>
+                    <button
+                      onClick={() => onDismiss(task.taskID)}
+                      className="text-red-600 text-sm underline mt-1"
+                    >
+                      Dismiss
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+            <button
+              onClick={() => {
+                tasks.forEach(task => onDismiss(task.taskID));
+                setShowPopup(false);
+              }}
+              className="w-full mt-4 py-2 bg-red-500 hover:bg-red-600 text-white font-bold rounded-lg shadow-md transition duration-300"
+            >
+              Dismiss All
+            </button>
           </div>
-
-          {/* Task List */}
-          <div className="mt-3">
-            <ul>
-              {newTasks.map((task) => (
-                <li key={task.taskID} className="bg-red-100 text-red-700 px-4 py-3 rounded-lg mb-2 shadow-sm">
-                  {/* Task Title */}
-                  <p className="text-sm font-semibold">{task.description}</p>
-
-                  {/* Collection Details */}
-                  <p className="text-xs text-gray-600">
-                    📍 <strong>Collect from:</strong> {task.end_station}
-                  </p>
-
-                  <p className="text-xs text-gray-600">
-                    ✉️ <strong>Sender:</strong> {task.sender}
-                  </p>
-
-                  <p className="text-xs text-gray-500">Task #{task.taskID}</p>
-                </li>
-              ))}
-            </ul>
-          </div>
-
-          {/* Dismiss Button */}
-          <button
-            onClick={() => setShowPopup(false)}
-            className="w-full mt-4 py-2 bg-red-500 hover:bg-red-600 text-white font-bold rounded-lg shadow-md transition duration-300"
-          >
-            Dismiss
-          </button>
         </div>
+
       )}
     </>
   );

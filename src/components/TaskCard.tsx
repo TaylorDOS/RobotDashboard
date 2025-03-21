@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { FiPackage } from "react-icons/fi";
+import { FiPackage, FiX } from "react-icons/fi";
 import { MdArrowForward } from "react-icons/md";
 
 interface Task {
@@ -55,7 +55,10 @@ const TaskCard: React.FC<{ task: Task }> = ({ task }) => {
           }[task.status] || "bg-red-50 border-red-300"}`}
         onClick={() => setIsModalOpen(true)}
       >
-        <h3 className="text-xl font-bold text-gray-800">{task.description}</h3>
+        <div className="flex items-center gap-2">
+          <FiPackage className="text-2xl" />
+          <h3 className="text-xl font-bold text-gray-800">{task.description}</h3>
+        </div>
 
         <span className="text-sm font-semibold text-center">
           {task.status}
@@ -72,7 +75,6 @@ const TaskCard: React.FC<{ task: Task }> = ({ task }) => {
 
           {/* Arrow Indicator with Icon */}
           <div className="flex flex-col items-center text-gray-700">
-            <FiPackage className="text-xl mb-1" />
             <MdArrowForward className="text-xl" />
           </div>
 
@@ -101,70 +103,70 @@ const TaskCard: React.FC<{ task: Task }> = ({ task }) => {
 
       {/* Modal */}
       {isModalOpen && (
-        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
-          <div className="bg-white rounded-lg shadow-lg p-6 w-full max-w-xl relative mx-4">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 backdrop-blur-sm px-4 py-8">
+          <div className="relative bg-white rounded-xl shadow-2xl w-full max-w-xl max-h-[90vh] overflow-y-auto p-6">
             {/* Close Button */}
             <button
               onClick={() => setIsModalOpen(false)}
-              className="absolute top-3 right-3 text-gray-500 hover:text-gray-700"
+              className="absolute top-3 right-3 text-gray-500 hover:text-red-400 transition"
+              aria-label="Close Modal"
             >
-              ✖
+              <FiX className="text-2xl" />
             </button>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 divide-y lg:divide-y-0 lg:divide-x">
+              {/* Left: Task Info */}
+              <div className="pr-0 lg:pr-6 space-y-4">
+                <div>
+                  <h2 className="text-2xl font-bold text-gray-900">{task.description}</h2>
+                  <p className="text-xs text-gray-500">Task ID: #{task.taskID}</p>
+                </div>
 
-            <h2 className="text-2xl font-bold text-gray-900">{task.description}</h2>
-            <div className="text-gray-900 mb-4 text-xs">Task ID: {task.taskID}
+                <div className="space-y-2 text-sm text-gray-700">
+                  <div><strong className="text-gray-900">Sender:</strong> {task.sender}</div>
+                  <div><strong className="text-gray-900">Receiver:</strong> {task.receiver}</div>
+                  <div><strong className="text-gray-900">Start:</strong> {task.start_station}</div>
+                  <div><strong className="text-gray-900">End:</strong> {task.end_station}</div>
+                  <div><strong className="text-gray-900">Slot:</strong> {task.slot}</div>
+                  <div className="flex items-center">
+                    <strong className="text-gray-900 mr-2">Priority:</strong>
+                    <span className={`px-3 py-1 rounded-full text-sm font-medium ${getPriorityColor(task.priority)}`}>
+                      {task.priority}
+                    </span>
+                  </div>
+                  <div className="flex items-center">
+                    <strong className="text-gray-900 mr-2">Status:</strong>
+                    <span className={`px-3 py-1 rounded-full text-sm font-medium ${task.status === "Completed" ? "bg-green-100 text-green-600" : task.status === "Ongoing" ? "bg-blue-100 text-blue-600" : "bg-red-100 text-red-600"}`}>
+                      {task.status}
+                    </span>
+                  </div>
+                </div>
+              </div>
 
-            </div>
+              {/* Right: Progress Tracker */}
+              <div className="pl-0 lg:pl-6 pt-6 lg:pt-0">
+                <strong className="block text-sm text-gray-900 mb-4">Progress:</strong>
+                <div className="flex flex-col items-center justify-center">
+                  {progressSteps.map((step, index) => {
+                    const isCompleted = progressSteps.indexOf(task.progress) >= index;
 
-            {/* Task Details */}
-            <div className="grid grid-cols-2 gap-4 text-gray-700 text-sm">
+                    return (
+                      <div key={index} className="relative flex flex-col items-center w-full">
+                        {index !== 0 && (
+                          <div className="left-1/2 transform h-8 flex flex-col items-center w-full">
+                            <div className={`my-1 w-[2px] h-full ${isCompleted ? "bg-blue-300" : "bg-gray-300"}`} />
+                          </div>
+                        )}
 
-              <p><strong className="text-gray-900">Sender:</strong> {task.sender}</p>
-              <p><strong className="text-gray-900">Receiver:</strong> {task.receiver}</p>
-              <p><strong className="text-gray-900">Start:</strong> {task.start_station}</p>
-              <p><strong className="text-gray-900">End:</strong> {task.end_station}</p>
-              <p><strong className="text-gray-900">Slot:</strong> {task.slot}</p>
-              <p> <strong className="text-gray-900">Priority:</strong>
-                <span className={`ml-2 px-3 py-1 text-sm font-medium rounded-full ${getPriorityColor(task.priority)}`}>{task.priority}</span>
-              </p>
-
-              <p className="col-span-2 flex items-center">
-                <strong className="text-gray-900">Status:</strong>
-                <span className={`ml-2 px-3 py-1 text-sm font-medium rounded-full ${task.status === "Completed" ? "bg-green-100 text-green-600" : task.status === "Ongoing" ? "bg-blue-100 text-blue-600" : "bg-red-100 text-red-600"}`}>
-                  {task.status}
-                </span>
-              </p>
-            </div>
-
-            {/* Progress Tracker */}
-            <div className="relative items-center mt-4">
-              <strong className="text-gray-900 text-sm">Progress:</strong>
-              <div className="flex flex-col items-center justify-center">
-                {progressSteps.map((step, index) => {
-                  const isCompleted = progressSteps.indexOf(task.progress) >= index;
-
-                  return (
-                    <div key={index} className="relative flex flex-col items-center w-full">
-
-                      {index !== 0 && (
                         <div
-                          className="left-1/2 transform h-8 flex flex-col items-center w-full"
+                          className={`w-full text-center rounded-full py-1 text-sm font-medium
+              ${isCompleted ? "bg-blue-500 text-white" : "bg-gray-200 text-gray-600"}`}
                         >
-                          <div className={`my-1 w-[2px] h-full ${isCompleted ? "bg-blue-300" : "bg-gray-300"}`} />
-
+                          {step}
                         </div>
-                      )}
-
-                      <div
-                        className={`lg:w-1/2 w-full p-1 text-center rounded-full text-sm font-bold
-                          ${isCompleted ? "bg-blue-500 text-white" : "bg-gray-200 text-gray-600"}`}
-                      >
-                        {step}
                       </div>
-
-                    </div>
-                  );
-                })}
+                    );
+                  })}
+                </div>
               </div>
             </div>
           </div>
