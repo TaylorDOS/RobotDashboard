@@ -313,6 +313,7 @@ const Home: React.FC = () => {
                   <Select
                     options={stationOptions}
                     value={stationOptions.find((opt) => opt.value === pickupStation)}
+                    isSearchable={false}
                     onChange={(selected) => {
                       setPickupStation(selected?.value || "");
                       setDropoffStation("");
@@ -330,6 +331,7 @@ const Home: React.FC = () => {
                   <Select
                     options={stationOptions.filter((s) => s.value !== pickupStation)}
                     value={stationOptions.find((opt) => opt.value === dropoffStation)}
+                    isSearchable={false}
                     onChange={(selected) => {
                       setDropoffStation(selected?.value || "");
                       setSlot(null);

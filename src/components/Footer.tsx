@@ -9,7 +9,7 @@ export function Footer() {
   const navigation = ["Deliver", "Overview"];
 
   return (
-    <div className="relative mx-auto max-w-screen-xl px-4 sm:px-8 mb-4">
+    <div className="relative mx-auto max-w-6xl mb-4">
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 pt-10 mt-5 border-t border-gray-200">
         {/* Logo & Description */}
         <div className="text-center md:text-left">
@@ -52,7 +52,7 @@ export function Footer() {
           <h3 className="text-lg font-semibold mb-2">Resources</h3>
           <div className="flex justify-center md:justify-start mt-4 space-x-4 text-gray-400">
             <a
-              href="https://taylordos-portfolio.vercel.app"
+              href="https://capstoneshowcase.sutd.edu.sg/project/proj-s38-techfox-hospital-delivery-system/"
               target="_blank"
               rel="noopener noreferrer"
             >

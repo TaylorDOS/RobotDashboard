@@ -22,7 +22,6 @@ export const Navbar = () => {
   const navigation = [
     { name: "Deliver", href: "/home" },
     { name: "Overview", href: "/overview" },
-    { name: "Simulator", href: "/simulator" },
     { name: "About", href: "/about" },
   ];
 
@@ -30,7 +29,7 @@ export const Navbar = () => {
 
   return (
     <div className="w-full border-b-2 border-gray-200 bg-white shadow-sm">
-      <div className="w-full container relative flex flex-wrap items-center justify-between px-8 py-6 mx-auto">
+      <div className="w-full container relative flex flex-wrap items-center justify-between px-8 py-6 max-w-6xl mx-auto">
         <Disclosure>
           {({ open }) => (
             <div className="flex flex-wrap items-center justify-between w-full lg:w-auto">

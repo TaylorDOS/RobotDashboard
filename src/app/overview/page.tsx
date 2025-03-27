@@ -109,7 +109,7 @@ const Notification: React.FC = () => {
 
   return (
     <div className="bg-gradient-to-b from-blue-200 to-transparent">
-      <div className="max-w-5xl mx-auto">
+      <div className="max-w-6xl mx-auto">
         <div className="pt-4 mx-4">
           <h1 className="text-4xl font-bold">Delivery Overview</h1>
           <div className="text-md mb-4">Check your ongoing delivery status here</div>
