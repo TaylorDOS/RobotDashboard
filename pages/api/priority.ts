@@ -43,38 +43,48 @@ export default async function handler(
   }
 }
 
-// External classification service
 async function classifyDescription(description: string): Promise<{ category: string; priority?: number }> {
-  console.log("Attempting to classify description:", description);
+  const controller = new AbortController();
+  const timeout = setTimeout(() => {
+    controller.abort();
+  }, 5000);
+  try {
+    const response = await fetch("https://capstone-gemini-flask-api.onrender.com/classify", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Accept: "application/json",
+      },
+      body: JSON.stringify({ description }),
+      signal: controller.signal,
+    });
 
-  const response = await fetch("https://capstone-gemini-flask-api.onrender.com/classify", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Accept: "application/json",
-    },
-    body: JSON.stringify({ description }),
-  });
+    clearTimeout(timeout);
 
-  if (!response.ok) {
-    let errorDetails = "";
-    try {
-      const errorData = await response.json();
-      errorDetails = JSON.stringify(errorData);
-    } catch (_) {
-      // Ignore parsing error
+    if (!response.ok) {
+      let errorDetails = "";
+      try {
+        const errorData = await response.json();
+        errorDetails = JSON.stringify(errorData);
+      } catch (_) {}
+
+      throw new Error(`Classification API failed: ${response.status} - ${errorDetails}`);
     }
 
-    throw new Error(`Classification API failed: ${response.status} - ${errorDetails}`);
+    const data = await response.json();
+
+    if (!data.category) {
+      throw new Error("API response missing category");
+    }
+
+    return data;
+  } catch (error) {
+    clearTimeout(timeout);
+
+    console.warn("API failed or timed out, using fallback priority");
+
+    return fallbackPriority(description);
   }
-
-  const data = await response.json();
-
-  if (!data.category) {
-    throw new Error("API response missing category");
-  }
-
-  return data;
 }
 
 // Heuristic fallback classifier

@@ -80,8 +80,8 @@ const Home: React.FC = () => {
 
 
   const fetchUsers = async () => {
+    setIsLoading(true);
     try {
-      console.log("Fetching all users from /api/getUsers...");
       const response = await fetch("/api/getUsers", {
         method: "GET",
         headers: {
@@ -96,11 +96,12 @@ const Home: React.FC = () => {
       }
 
       const usersList: CognitoUser[] = await response.json();
-      setUsers(usersList);
-      console.log("Users retrieved:", usersList);
+      const sortedUsers = usersList.sort((a, b) => a.username.localeCompare(b.username));
+      setUsers(sortedUsers);
     } catch (error) {
       console.error("Error fetching Cognito users:", error);
     }
+    setIsLoading(false);
   };
 
   const fetchCurrentUsername = async () => {
@@ -111,7 +112,6 @@ const Home: React.FC = () => {
     try {
       const matchedUser = users.find((user) => user.email === session.user?.email);
       if (matchedUser) {
-        console.log("Current User Found:", matchedUser);
         setUsername(matchedUser.username);
       } else {
         console.warn("No matching user found for email:", session.user.email);
@@ -169,20 +169,19 @@ const Home: React.FC = () => {
         },
         body: JSON.stringify({ description }),
       });
-    
+
       if (!response.ok) {
         throw new Error(`HTTP error! Status: ${response.status}`);
       }
-    
+
       const data = await response.json(); // Parse the JSON
-      console.log("Priority API result:", data);
-    
+
       if (data.priority) {
         setPriority(data.priority);
       } else {
         console.warn("No priority returned from API.");
       }
-    
+
     } catch (error) {
       console.error("Error fetching priority:", error);
     }
@@ -266,26 +265,34 @@ const Home: React.FC = () => {
             width={300}
             height={300}
           />
-          <div className="mt-8">
-            Choose the intended recipient for the delivery.
-          </div>
-          <div className="mt-4 w-full">
-            <label className="block font-medium text-lg mb-2">Select Receiver</label>
-            <Select
-              options={userOptions}
-              onChange={handleUserChange}
-              value={userOptions.find((opt) => opt.value === selectedUser)}
-              placeholder="Choose a user..."
-              className="text-left"
-              classNames={{
-                control: () => "p-1 shadow-md border border-gray-300",
-              }}
-            />
-          </div>
-
-          <div className="h-6 text-center mt-8">
-            {error && <p className="text-red-500 text-sm">{error}</p>}
-          </div>
+          {isLoading ? (
+            <div className="flex items-center justify-center h-32">
+              <FaSpinner className="animate-spin text-blue-600 text-3xl" />
+            </div>
+          ) : (
+            <>
+              <div className="mt-8">
+                Choose the intended recipient for the delivery.
+              </div>
+              <div className="mt-4 w-full">
+                <label className="block font-medium text-lg mb-2">Select Receiver</label>
+                <Select
+                  options={userOptions}
+                  onChange={handleUserChange}
+                  value={userOptions.find((opt) => opt.value === selectedUser)}
+                  placeholder="Choose a user..."
+                  isSearchable={false}
+                  className="text-left"
+                  classNames={{
+                    control: () => "p-1 shadow-md border border-gray-300",
+                  }}
+                />
+              </div>
+              <div className="h-6 text-center mt-8">
+                {error && <p className="text-red-500 text-sm">{error}</p>}
+              </div>
+            </>
+          )}
         </div>
       ),
     },
@@ -301,7 +308,6 @@ const Home: React.FC = () => {
           ) : (
             <div className="w-full flex flex-col items-center">
               <div className="mt-6 w-full max-w-lg flex justify-between gap-4">
-                {/* Pickup Station */}
                 <div className="flex-1">
                   <label className="block font-medium text-lg mb-2">Pickup</label>
                   <Select
