@@ -281,7 +281,6 @@ const Home: React.FC = () => {
                   onChange={handleUserChange}
                   value={userOptions.find((opt) => opt.value === selectedUser)}
                   placeholder="Choose a user..."
-                  isSearchable={false}
                   className="text-left"
                   classNames={{
                     control: () => "p-1 shadow-md border border-gray-300",
@@ -320,7 +319,7 @@ const Home: React.FC = () => {
                       setSlot(null);
                       setError("");
                     }}
-                    placeholder="Select Start Station"
+                    placeholder="Pickup Location"
                     classNames={{ control: () => "rounded-full" }}
                   />
                 </div>
@@ -337,7 +336,7 @@ const Home: React.FC = () => {
                       setSlot(null);
                       setError("");
                     }}
-                    placeholder="Select End Station"
+                    placeholder="Pickup Location"
                     isDisabled={!pickupStation}
                     classNames={{ control: () => "rounded-full" }}
                   />
@@ -346,9 +345,8 @@ const Home: React.FC = () => {
 
               {pickupStation && dropoffStation && (() => {
                 const slotOptions = getSlotVisuals();
-
                 return (
-                  <div className="mt-6 w-40">
+                  <div className="mt-8 w-64">
                     <label className="block font-medium text-lg mb-4">Available Slots</label>
                     <div className="w-full rounded-xl border border-gray-300 bg-white shadow-sm p-4">
                       <div className="grid grid-cols-1 gap-3">
@@ -365,7 +363,7 @@ const Home: React.FC = () => {
                                 : "bg-red-100 text-red-400 border-red-200 cursor-not-allowed"
                               }`}
                           >
-                            {option.label}
+                            {`Slot ${option.label}`}
                           </button>
                         ))}
                       </div>

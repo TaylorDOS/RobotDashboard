@@ -7,13 +7,15 @@ interface FloatingStatusButtonProps {
 }
 
 const FloatingStatusButton: React.FC<FloatingStatusButtonProps> = ({ pendingCount, onClick }) => {
+  if (pendingCount === 0) return null;
+  
   return (
     <button
       onClick={onClick}
-      className="fixed bottom-6 right-6 bg-blue-600 text-white px-4 py-3 rounded-full shadow-lg hover:bg-blue-700 transition duration-300 flex items-center z-10"
+      className="fixed bottom-6 right-6 bg-red-500 text-white px-4 py-3 rounded-full shadow-lg hover:bg-red-400 transition duration-300 flex items-center z-50"
     >
       <span className="text-sm font-semibold">
-        {pendingCount > 0 ? `${pendingCount} Pending Collection` : "0 Pending Collection"}
+        {pendingCount} Pending Collection
       </span>
     </button>
   );

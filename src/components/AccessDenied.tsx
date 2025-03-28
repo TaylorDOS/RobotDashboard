@@ -2,6 +2,7 @@
 
 import { signIn } from "next-auth/react";
 import { FiLogIn } from "react-icons/fi";
+import Link from "next/link";
 
 export default function AccessDenied() {
   return (
