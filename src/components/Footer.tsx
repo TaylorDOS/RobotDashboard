@@ -9,7 +9,7 @@ export function Footer() {
   const navigation = ["Deliver", "Overview"];
 
   return (
-    <div className="relative mx-auto max-w-6xl mb-4 -z-10">
+    <div className="relative mx-auto max-w-6xl mb-4 z-0">
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 pt-10 mt-5 border-t border-gray-200">
         {/* Logo & Description */}
         <div className="text-center md:text-left">

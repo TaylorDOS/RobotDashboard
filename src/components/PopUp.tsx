@@ -1,6 +1,7 @@
 "use client";
 import { useState, useEffect } from "react";
 import { FiPackage } from "react-icons/fi";
+import { ImCross } from "react-icons/im";
 
 interface Task {
   taskID: number;
@@ -23,19 +24,29 @@ const PopUp: React.FC<{ tasks: Task[]; isOpen: boolean; setIsOpen: (open: boolea
   return (
     <>
       {showPopup && tasks.length > 0 && (
-        <div className="fixed inset-0 bg-black/50 flex flex-col items-center justify-center p-4 z-10 backdrop-blur-sm">
-          <div className="bg-white rounded-lg shadow-lg p-4 sm:p-6 w-full max-w-[90%] sm:max-w-md md:max-w-lg relative max-h-[90vh] overflow-y-auto">
-            {/* <button
+        <div
+          className="fixed inset-0 bg-black/50 flex flex-col items-center justify-center p-4 z-20 backdrop-blur-sm"
+          onClick={() => setShowPopup(false)} // ← CLOSE when background is clicked
+        >
+          <div
+            className="bg-white rounded-lg shadow-lg p-4 sm:p-6 w-full max-w-[90%] sm:max-w-md md:max-w-lg relative max-h-[90vh] overflow-y-auto"
+            onClick={(e) => e.stopPropagation()} // ← PREVENT inner click from closing
+          >
+            {/* Close button if needed */}
+            <button
               onClick={() => setShowPopup(false)}
-              className="absolute top-2 right-2 sm:top-4 sm:right-4 text-gray-500 hover:text-gray-700 text-2xl"
+              className="absolute top-2 right-2 sm:top-3 sm:right-3 text-gray-400 hover:text-red-400 transition-colors duration-200"
+              aria-label="Close Modal"
             >
-              ✖
-            </button> */}
+              <ImCross size={18} />
+            </button>
+
+            {/* Rest of modal content */}
             <div className="flex items-center justify-between">
               <h3 className="text-xl font-bold text-red-600">Delivery Notification</h3>
             </div>
             <div className="mt-3">
-              <ul className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <ul className="grid grid-cols-1 gap-3">
                 {tasks.map((task) => (
                   <li key={task.taskID} className="bg-red-100 text-red-700 px-3 sm:px-4 py-2 sm:py-3 rounded-lg shadow-sm flex flex-row">
                     <div className="w-1/6 flex items-center justify-center">

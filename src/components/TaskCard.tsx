@@ -1,6 +1,7 @@
 import React, { useState } from "react";
-import { FiPackage, FiX } from "react-icons/fi";
+import { FiPackage } from "react-icons/fi";
 import { MdArrowForward } from "react-icons/md";
+import { ImCross } from "react-icons/im";
 
 interface Task {
   taskID: number;
@@ -46,8 +47,7 @@ const TaskCard: React.FC<{ task: Task }> = ({ task }) => {
   return (
     <>
       <div
-        className={"rounded-lg p-4 sm:p-6 border transition-all relative cursor-pointer hover:shadow-xl bg-white"
-        }
+        className="rounded-lg p-4 sm:p-6 border transition-all transform hover:scale-105 relative cursor-pointer hover:shadow-xl bg-white z-0 shadow-lg"
         onClick={() => setIsModalOpen(true)}
       >
         <div className="flex items-center gap-2">
@@ -97,15 +97,18 @@ const TaskCard: React.FC<{ task: Task }> = ({ task }) => {
 
       {/* Modal */}
       {isModalOpen && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex flex-col items-center justify-center p-4 z-5">
+        <div
+          className="fixed inset-0 bg-black/50 backdrop-blur-sm flex flex-col items-center justify-center p-4 z-10"
+          onClick={() => setIsModalOpen(false)} // 🟢 Close on backdrop click
+        >
           <div className="relative bg-white rounded-xl shadow-2xl w-full max-w-[95%] sm:max-w-xl max-h-[90vh] overflow-y-auto">
             {/* Close Button */}
             <button
               onClick={() => setIsModalOpen(false)}
-              className="absolute top-2 right-2 sm:top-3 sm:right-3 text-gray-500 hover:text-red-400 transition text-2xl"
+              className="absolute top-2 right-2 sm:top-3 sm:right-3 text-gray-500 hover:text-red-400 transition-colors duration-200"
               aria-label="Close Modal"
             >
-              ✖
+              <ImCross size={18} />
             </button>
             <div className="p-4 sm:p-6">
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 divide-y lg:divide-y-0 lg:divide-x">
