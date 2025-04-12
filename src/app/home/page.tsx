@@ -256,7 +256,7 @@ const Home: React.FC = () => {
   const screens = [
     {
       title: "Automated Delivery",
-      description: "Schedule a task for the delivery robot.",
+      description: "Create a task for the delivery robot.",
       content: (
         <div className="flex flex-col items-center justify-center w-full max-w-lg mx-auto h-full -mt-12">
           <Image

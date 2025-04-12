@@ -154,6 +154,8 @@ export function DeliverForm() {
         if (description.toLowerCase().includes("medicine") || 
             description.toLowerCase().includes("pill") || 
             description.toLowerCase().includes("drug") || 
+            description.toLowerCase().includes("meds") || 
+            description.toLowerCase().includes("medicines") || 
             description.toLowerCase().includes("prescription")) {
           console.log("Applying fallback heuristic: Medicine");
           setCategory("Medicine");
@@ -162,6 +164,7 @@ export function DeliverForm() {
         } else if (description.toLowerCase().includes("blood") || 
                  description.toLowerCase().includes("sample") || 
                  description.toLowerCase().includes("specimen") || 
+                 description.toLowerCase().includes("samples") || 
                  description.toLowerCase().includes("lab")) {
           console.log("Applying fallback heuristic: Blood Samples");
           setCategory("Blood Samples");
@@ -170,6 +173,7 @@ export function DeliverForm() {
         } else if (description.toLowerCase().includes("document") || 
                  description.toLowerCase().includes("paper") || 
                  description.toLowerCase().includes("file") || 
+                 description.toLowerCase().includes("report") || 
                  description.toLowerCase().includes("form")) {
           console.log("Applying fallback heuristic: Documents");
           setCategory("Documents");
@@ -178,6 +182,7 @@ export function DeliverForm() {
         } else if (description.toLowerCase().includes("linen") || 
                  description.toLowerCase().includes("cloth") || 
                  description.toLowerCase().includes("supply") || 
+                 description.toLowerCase().includes("clothing") || 
                  description.toLowerCase().includes("fabric")) {
           console.log("Applying fallback heuristic: Linen Supplies");
           setCategory("Linen Supplies");

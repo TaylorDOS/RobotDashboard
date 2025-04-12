@@ -246,6 +246,21 @@ const AdminSimulator: React.FC = () => {
                 <TaskActions 
                   selectedTask={selectedTask}
                   allTasks={combinedTasks} 
+                  onTaskUpdate={(updatedTask) => {
+                    // Update the selected task with the latest data
+                    setSelectedTask(updatedTask);
+                    
+                    // Also update the task in the appropriate lists
+                    setSentTasks(prev => 
+                      prev.map(task => task.taskID === updatedTask.taskID ? updatedTask : task)
+                    );
+                    
+                    setReceivedTasks(prev => 
+                      prev.map(task => task.taskID === updatedTask.taskID ? updatedTask : task)
+                    );
+                    
+                    console.log("Task updated from polling:", updatedTask);
+                  }}
                 />
               </div>
               

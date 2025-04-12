@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 
 interface Task {
@@ -15,10 +15,13 @@ interface Task {
   priority: number;
 }
 
-export function TaskActions({ selectedTask, allTasks = [] }: { 
-  selectedTask: Task | null,
-  allTasks?: Task[] 
-}) {
+interface TaskActionsProps {
+  selectedTask: Task | null;
+  allTasks?: Task[];
+  onTaskUpdate?: (updatedTask: Task) => void;
+}
+
+export function TaskActions({ selectedTask, allTasks = [], onTaskUpdate }: TaskActionsProps) {
   const [actionStatus, setActionStatus] = useState({
     userDropoff: false,
     loadingDone: false,
@@ -27,7 +30,23 @@ export function TaskActions({ selectedTask, allTasks = [] }: {
   });
   
   const [actionMessage, setActionMessage] = useState<string>("");
+  const [isPolling, setIsPolling] = useState<boolean>(false);
+  const [lastActionTime, setLastActionTime] = useState<number | null>(null);
+  
+  // Use refs to track the currently selected task ID for polling
+  const selectedTaskIdRef = useRef<number | null>(null);
+  const cognitoUsernameRef = useRef<string | null>(null);
 
+  // Update the ref whenever selectedTask changes
+  useEffect(() => {
+    selectedTaskIdRef.current = selectedTask?.taskID || null;
+    // Extract username from task data if available
+    if (selectedTask) {
+      cognitoUsernameRef.current = selectedTask.sender || selectedTask.receiver || null;
+    }
+  }, [selectedTask]);
+
+  // Initial setup of action button states based on task status/progress
   useEffect(() => {
     if (!selectedTask) return;
     
@@ -41,17 +60,15 @@ export function TaskActions({ selectedTask, allTasks = [] }: {
       userPickup: false
     };
     
-
+    // Set button states based on task status and progress
     if (selectedTask.status !== "PendingDropoff") {
       initialState.userDropoff = true; 
     }
     
-
     if (selectedTask.progress !== "Loading") {
       initialState.loadingDone = true; 
     }
     
-
     if (selectedTask.progress !== "Unloading") {
       initialState.unloadingDone = true; 
     }
@@ -65,6 +82,88 @@ export function TaskActions({ selectedTask, allTasks = [] }: {
     setActionMessage("");
   }, [selectedTask]);
   
+  // Polling function to get the latest task status using the existing API
+  const pollTaskStatus = async () => {
+    const taskId = selectedTaskIdRef.current;
+    const username = cognitoUsernameRef.current;
+    
+    if (!taskId || !username) return;
+    
+    try {
+      setIsPolling(true);
+      console.log(`Polling for updates on task ${taskId}...`);
+      
+      // Fetch tasks using both queues to ensure we get the latest status
+      const fetchTasks = async (messageType: string) => {
+        try {
+          const response = await fetch(`/api/fetchTasks?userId=${encodeURIComponent(username)}&message=${messageType}`);
+          if (!response.ok) {
+            throw new Error(`Failed to fetch ${messageType}`);
+          }
+          return await response.json();
+        } catch (error) {
+          console.error(`Error fetching ${messageType}:`, error);
+          return [];
+        }
+      };
+      
+      // Fetch from both queues in parallel
+      const [sendTasks, receiveTasks] = await Promise.all([
+        fetchTasks("SendQueue"),
+        fetchTasks("ReceiveQueue")
+      ]);
+      
+      // Find the task in either queue
+      const allFetchedTasks = [...sendTasks, ...receiveTasks];
+      const updatedTask = allFetchedTasks.find(task => task.taskID === taskId);
+      
+      // Update the task if we found it
+      if (updatedTask) {
+        console.log("Task update found:", updatedTask);
+        
+        // Update parent component if callback provided
+        if (onTaskUpdate) {
+          onTaskUpdate(updatedTask);
+        }
+        
+        // Update local UI state based on task status
+        const newActionStatus = {
+          userDropoff: updatedTask.status !== "PendingDropoff",
+          loadingDone: updatedTask.progress !== "Loading",
+          unloadingDone: updatedTask.progress !== "Unloading",
+          userPickup: updatedTask.status !== "PendingCollection"
+        };
+        
+        setActionStatus(newActionStatus);
+      } else {
+        console.log("No updates found for task", taskId);
+      }
+    } catch (error) {
+      console.error("Error polling for task updates:", error);
+    } finally {
+      setIsPolling(false);
+    }
+  };
+  
+  // Set up polling interval
+  useEffect(() => {
+    if (!selectedTask) return;
+    
+    // Poll immediately on task selection
+    pollTaskStatus();
+    
+    // Set up recurring polling
+    const intervalId = setInterval(() => {
+      pollTaskStatus();
+    }, 5000); // Poll every 5 seconds
+    
+    // Clean up interval on unmount or task change
+    return () => {
+      clearInterval(intervalId);
+    };
+  }, [selectedTask, lastActionTime]);
+  
+  // Function to send action request
   const sendActionRequest = async (actionType: string, description: string) => {
     if (!selectedTask) return;
     
@@ -79,6 +178,7 @@ export function TaskActions({ selectedTask, allTasks = [] }: {
       console.log("Sending action request:", requestPayload);
       await axios.post('https://4oomdu5wr0.execute-api.ap-southeast-1.amazonaws.com/default/WebHooks', requestPayload);
       
+      // Update button state
       setActionStatus(prev => ({
         ...prev,
         [actionType === 'UserDropoff' ? 'userDropoff' : 
@@ -88,12 +188,21 @@ export function TaskActions({ selectedTask, allTasks = [] }: {
       }));
       
       setActionMessage(`Success: ${description}`);
+      
+      // Set last action time to trigger an immediate poll
+      setLastActionTime(Date.now());
+      
+      // Poll for updates after a short delay
+      setTimeout(() => {
+        pollTaskStatus();
+      }, 1000);
     } catch (error) {
       console.error('Error sending action request:', error);
       setActionMessage(`Error: Failed to ${description.toLowerCase()}`);
     }
   };
 
+  // If no task is selected, show only the dropdown
   if (!selectedTask) {
     return (
       <div className="bg-white rounded-lg p-6 border border-gray-200 space-y-6">
@@ -122,7 +231,7 @@ export function TaskActions({ selectedTask, allTasks = [] }: {
               <option value="">-- Select a Task --</option>
               {allTasks.map(task => (
                 <option key={task.taskID} value={task.taskID}>
-                  Task {task.taskID} - {task.progress} ({task.start_station} to {task.end_station})
+                  Task {task.taskID} - {task.progress || task.status} ({task.start_station} to {task.end_station})
                 </option>
               ))}
             </select>
@@ -161,7 +270,7 @@ export function TaskActions({ selectedTask, allTasks = [] }: {
             <option value="">-- Select a Task --</option>
             {allTasks.map(task => (
               <option key={task.taskID} value={task.taskID}>
-                Task {task.taskID} - {task.progress} ({task.start_station} to {task.end_station})
+                Task {task.taskID} - {task.progress || task.status} ({task.start_station} to {task.end_station})
               </option>
             ))}
           </select>
@@ -171,6 +280,7 @@ export function TaskActions({ selectedTask, allTasks = [] }: {
           <p><strong>ID:</strong> {selectedTask.taskID}</p>
           <p><strong>Status:</strong> {selectedTask.status}</p>
           <p><strong>Progress:</strong> {selectedTask.progress}</p>
+          {isPolling && <p className="text-blue-500 text-xs italic mt-1">Checking for updates...</p>}
         </div>
         
         {actionMessage && (
