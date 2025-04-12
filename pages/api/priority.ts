@@ -91,10 +91,10 @@ async function classifyDescription(description: string): Promise<{ category: str
 function fallbackPriority(desc: string): { category: string; priority: number } {
   const lower = desc.toLowerCase();
 
-  if (lower.includes("medicine") || lower.includes("pill") || lower.includes("drug") || lower.includes("prescription")) {
-    return { category: "Medicine", priority: 1 };
-  } else if (lower.includes("blood") || lower.includes("sample") || lower.includes("specimen") || lower.includes("lab")) {
-    return { category: "Blood Samples", priority: 2 };
+  if (lower.includes("blood") || lower.includes("sample") || lower.includes("specimen") || lower.includes("lab")) {
+    return { category: "Samples", priority: 1 };
+  } else if (lower.includes("medicine") || lower.includes("pill") || lower.includes("drug") || lower.includes("prescription")) {
+    return { category: "Medicine", priority: 2 };
   } else if (lower.includes("document") || lower.includes("paper") || lower.includes("file") || lower.includes("form")) {
     return { category: "Documents", priority: 3 };
   } else if (lower.includes("linen") || lower.includes("cloth") || lower.includes("supply") || lower.includes("fabric")) {

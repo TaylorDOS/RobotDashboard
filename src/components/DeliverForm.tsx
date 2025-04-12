@@ -41,8 +41,8 @@ export function DeliverForm() {
 
   // Map categories to their respective priorities
   const categoryPriorityMap: {[key: string]: number} = {
-    "Medicine": 1,
-    "Blood Samples": 2,
+    "Samples": 1,
+    "Medicine": 2,
     "Documents": 3,
     "Linen Supplies": 4,
     "Others": 5
@@ -151,23 +151,23 @@ export function DeliverForm() {
         
         // If the API failed, second resort
         // This is a fallback heuristic when the API is unavailable
-        if (description.toLowerCase().includes("medicine") || 
-            description.toLowerCase().includes("pill") || 
-            description.toLowerCase().includes("drug") || 
-            description.toLowerCase().includes("meds") || 
-            description.toLowerCase().includes("medicines") || 
-            description.toLowerCase().includes("prescription")) {
-          console.log("Applying fallback heuristic: Medicine");
-          setCategory("Medicine");
+        if (description.toLowerCase().includes("blood") || 
+            description.toLowerCase().includes("sample") || 
+            description.toLowerCase().includes("specimen") || 
+            description.toLowerCase().includes("samples") || 
+            description.toLowerCase().includes("lab")) {
+        console.log("Applying fallback heuristic: Samples");
+        setCategory("Samples");
           setPriority(1);
           setManualSelection(true); // Still enable manual mode, but with a pre-selection
-        } else if (description.toLowerCase().includes("blood") || 
-                 description.toLowerCase().includes("sample") || 
-                 description.toLowerCase().includes("specimen") || 
-                 description.toLowerCase().includes("samples") || 
-                 description.toLowerCase().includes("lab")) {
-          console.log("Applying fallback heuristic: Blood Samples");
-          setCategory("Blood Samples");
+        } else if (description.toLowerCase().includes("medicine") || 
+                  description.toLowerCase().includes("pill") || 
+                  description.toLowerCase().includes("drug") || 
+                  description.toLowerCase().includes("meds") || 
+                  description.toLowerCase().includes("medicines") || 
+                  description.toLowerCase().includes("prescription")) {
+                console.log("Applying fallback heuristic: Medicine");
+                setCategory("Medicine");
           setPriority(2);
           setManualSelection(true);
         } else if (description.toLowerCase().includes("document") || 
@@ -506,8 +506,8 @@ export function DeliverForm() {
                     }}
                   >
                     <option value="" disabled>Select Category</option>
-                    <option value={1}>Medicine</option>
-                    <option value={2}>Blood Samples</option>
+                    <option value={1}>Samples</option>
+                    <option value={2}>Medicine</option>
                     <option value={3}>Documents</option>
                     <option value={4}>Linen Supplies</option>
                     <option value={5}>Others</option>
