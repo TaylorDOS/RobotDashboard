@@ -22,7 +22,6 @@ export const Navbar = () => {
   const navigation = [
     { name: "Deliver", href: "/home" },
     { name: "Overview", href: "/overview" },
-    { name: "About", href: "/about" },
   ];
 
   const isActive = (href: string) => pathname === href;
